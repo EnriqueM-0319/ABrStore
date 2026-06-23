@@ -15,8 +15,8 @@ export default defineEventHandler(async (event) => {
   const stock = Number(body.stock)
   const unit = body.unit === 'KILOGRAM' ? 'KILOGRAM' : body.unit === 'PIECE' ? 'PIECE' : null
 
-  if (sku.length < 2 || name.length < 2 || !unit || !Number.isFinite(costPrice) || costPrice < 0 || !Number.isFinite(profitMargin) || profitMargin < 0 || !Number.isFinite(price) || price <= 0 || !Number.isFinite(stock) || stock < 0 || (unit === 'PIECE' && !Number.isInteger(stock))) {
-    throw createError({ statusCode: 400, message: 'Revisa los precios, el porcentaje de ganancia y las existencias.' })
+  if (sku.length < 2 || name.length < 2 || !unit || !Number.isFinite(costPrice) || costPrice < 0 || !Number.isFinite(profitMargin) || profitMargin < 0 || profitMargin >= 100 || !Number.isFinite(price) || price <= 0 || !Number.isFinite(stock) || stock < 0 || (unit === 'PIECE' && !Number.isInteger(stock))) {
+    throw createError({ statusCode: 400, message: 'Revisa los precios, el porcentaje de ganancia menor a 100% y las existencias.' })
   }
 
   try {

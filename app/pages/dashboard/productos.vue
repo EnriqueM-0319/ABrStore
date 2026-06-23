@@ -18,7 +18,7 @@ watch([() => form.costPrice, () => form.profitMargin, autoPrice], () => {
   if (!autoPrice.value) return
   const cost = Number(form.costPrice)
   const margin = Number(form.profitMargin)
-  form.price = Number.isFinite(cost) && Number.isFinite(margin) ? (cost * (1 + margin / 100)).toFixed(2) : ''
+  form.price = calculatePublicPriceFromMargin(cost, margin)
 })
 
 function setManualPrice(value: string | number) {
@@ -26,7 +26,8 @@ function setManualPrice(value: string | number) {
   autoPrice.value = false
   const cost = Number(form.costPrice)
   const publicPrice = Number(form.price)
-  if (cost > 0 && Number.isFinite(publicPrice)) form.profitMargin = (((publicPrice - cost) / cost) * 100).toFixed(2)
+  const margin = calculateMarginFromPublicPrice(cost, publicPrice)
+  if (margin) form.profitMargin = margin
 }
 
 async function saveProduct() {
@@ -66,7 +67,7 @@ async function saveProduct() {
               <FormField v-model="form.profitMargin" name="profitMargin" label="Ganancia (%)" type="number" placeholder="30" autocomplete="off" />
             </div>
             <div class="rounded-xl border border-[#e2e7e3] bg-[#f8faf8] p-4">
-              <div class="mb-3 flex items-center justify-between gap-3"><div><p class="text-sm font-semibold">Calcular precio automáticamente</p><p class="text-xs text-[#78827c]">Costo + porcentaje de ganancia</p></div><USwitch v-model="autoPrice" aria-label="Calcular precio al público automáticamente" /></div>
+              <div class="mb-3 flex items-center justify-between gap-3"><div><p class="text-sm font-semibold">Calcular precio automáticamente</p><p class="text-xs text-[#78827c]">Costo ÷ porcentaje restante</p></div><USwitch v-model="autoPrice" aria-label="Calcular precio al público automáticamente" /></div>
               <UFormField label="Precio al público" name="price" required><UInput :model-value="form.price" type="number" inputmode="decimal" placeholder="0.00" size="xl" class="w-full" @update:model-value="setManualPrice" /></UFormField>
             </div>
             <div class="grid grid-cols-2 gap-3"><UFormField label="Unidad de venta" name="unit" required><USelect v-model="form.unit" :items="unitOptions" value-key="value" label-key="label" size="xl" class="w-full" /></UFormField><FormField v-model="form.stock" name="stock" label="Existencias iniciales" type="number" placeholder="0" autocomplete="off" min="0" :step="form.unit === 'PIECE' ? '1' : '0.001'" /></div>

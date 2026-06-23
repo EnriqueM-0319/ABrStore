@@ -8,6 +8,12 @@ dist
 
 # Node dependencies
 node_modules
+.pnpm-store
+.pnpm-store/
+
+# Deployment
+.vercel
+.vercel/
 
 # Logs
 logs

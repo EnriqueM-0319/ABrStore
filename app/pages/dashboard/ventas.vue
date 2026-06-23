@@ -434,14 +434,25 @@ async function discardHeldTicket(ticket: HeldTicket, notify = true) {
                   <p class="text-sm text-[#748078]">Cambio</p>
                   <p class="text-2xl font-bold tracking-[-.04em]" :class="cashReceivedIsInsufficient ? 'text-amber-700' : 'text-emerald-700'">{{ currency.format(changeDue) }}</p>
                 </div>
-                <div class="flex items-center justify-between gap-4 border-t border-[#e2e8e3] pt-3">
-                  <p class="text-sm text-[#748078]">Total a cobrar</p>
-                  <p class="text-lg font-bold text-[#1f4937]">{{ currency.format(paymentTotal) }}</p>
-                </div>
                 <p v-if="cashReceivedIsInsufficient && cart.length" class="text-xs text-amber-700">Ingresa al menos {{ currency.format(paymentTotal) }} para cobrar en efectivo.</p>
               </div>
-              <div class="flex items-end justify-between"><div><p class="text-sm text-[#748078]">Total</p><p class="text-xs text-[#929a95]">Impuestos incluidos</p></div><p class="text-3xl font-bold tracking-[-.04em] text-[#1f4937]">{{ currency.format(total) }}</p></div>
-              <p v-if="paymentMethod === 'CASH' && paymentTotal !== total" class="mt-2 text-right text-xs text-[#7d8781]">Redondeo en efectivo: {{ currency.format(paymentTotal) }}</p>
+              <div class="rounded-2xl border border-[#dce6df] bg-[#f7faf8] p-4">
+                <div class="flex items-end justify-between gap-4">
+                  <div>
+                    <p class="text-sm font-semibold text-[#456052]">{{ paymentMethod === 'CASH' ? 'Total a cobrar' : 'Total' }}</p>
+                    <p class="text-xs text-[#748078]">{{ paymentMethod === 'CASH' ? 'Importe final con redondeo de efectivo' : 'Impuestos incluidos' }}</p>
+                  </div>
+                  <p class="text-4xl font-black tracking-[-.05em] text-[#1f4937]">{{ currency.format(paymentTotal) }}</p>
+                </div>
+                <div class="mt-3 flex items-center justify-between border-t border-[#e2e8e3] pt-3">
+                  <p class="text-xs text-[#748078]">Subtotal</p>
+                  <p class="text-sm font-semibold text-[#536057]">{{ currency.format(total) }}</p>
+                </div>
+                <div v-if="paymentMethod === 'CASH' && paymentTotal !== total" class="mt-2 flex items-center justify-between">
+                  <p class="text-xs text-[#748078]">Ajuste por redondeo</p>
+                  <p class="text-sm font-semibold text-[#536057]">{{ currency.format(paymentTotal - total) }}</p>
+                </div>
+              </div>
               <UFormField v-if="cart.length" label="Nota para guardar" name="heldTicketNote" class="mt-4">
                 <UInput v-model="heldTicketNote" placeholder="Ej. Cliente de camisa azul…" maxlength="120" class="w-full" />
               </UFormField>

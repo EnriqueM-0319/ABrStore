@@ -62,7 +62,7 @@ watch([() => editForm.costPrice, () => editForm.profitMargin, autoPrice], () => 
   if (!autoPrice.value) return
   const cost = Number(editForm.costPrice)
   const margin = Number(editForm.profitMargin)
-  editForm.price = Number.isFinite(cost) && Number.isFinite(margin) ? (cost * (1 + margin / 100)).toFixed(2) : ''
+  editForm.price = calculatePublicPriceFromMargin(cost, margin)
 })
 
 function setManualEditPrice(value: string | number) {
@@ -70,7 +70,8 @@ function setManualEditPrice(value: string | number) {
   autoPrice.value = false
   const cost = Number(editForm.costPrice)
   const publicPrice = Number(editForm.price)
-  if (cost > 0 && Number.isFinite(publicPrice)) editForm.profitMargin = (((publicPrice - cost) / cost) * 100).toFixed(2)
+  const margin = calculateMarginFromPublicPrice(cost, publicPrice)
+  if (margin) editForm.profitMargin = margin
 }
 
 async function saveChanges() {
