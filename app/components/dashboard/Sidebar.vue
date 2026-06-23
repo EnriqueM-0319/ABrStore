@@ -1,0 +1,145 @@
+<script setup lang="ts">
+defineProps<{ compact?: boolean }>()
+defineEmits<{ navigate: [] }>()
+
+const route = useRoute()
+const { user, clearUser } = useAuth()
+const items = [
+  { label: 'Punto de venta', icon: 'i-lucide-monitor-up', to: '/dashboard/ventas', enabled: true },
+  { label: 'Productos', icon: 'i-lucide-package', to: '/dashboard/productos', enabled: true },
+  { label: 'Historial de ventas', icon: 'i-lucide-receipt-text', to: '/dashboard/historial', enabled: true },
+  { label: 'Inventario', icon: 'i-lucide-warehouse', to: '/dashboard/inventario', enabled: true }
+]
+const adminItems = [
+  { label: 'Usuarios', icon: 'i-lucide-users', to: '/dashboard/usuarios', enabled: true },
+  { label: 'Registrar usuario', icon: 'i-lucide-user-plus', to: '/registro', enabled: true }
+]
+const exitItems = [
+  { label: 'Registrar salida', icon: 'i-lucide-package-minus', to: '/dashboard/salidas' },
+  { label: 'Historial de salidas', icon: 'i-lucide-list', to: '/dashboard/salidas/historial' }
+]
+const cashItems = [
+  { label: 'Inicio del día', icon: 'i-lucide-sunrise', to: '/dashboard/caja/inicio' },
+  { label: 'Movimientos', icon: 'i-lucide-wallet-cards', to: '/dashboard/caja/movimientos' },
+  { label: 'Cierre de caja', icon: 'i-lucide-calculator', to: '/dashboard/caja/cierre' }
+]
+const exitsOpen = ref(route.path.startsWith('/dashboard/salidas'))
+const cashOpen = ref(route.path.startsWith('/dashboard/caja'))
+const canManageUsers = computed(() => ['SUPERADMIN', 'ADMIN'].includes(user.value?.role || ''))
+
+watch(() => route.path, (path) => {
+  if (path.startsWith('/dashboard/salidas')) exitsOpen.value = true
+  if (path.startsWith('/dashboard/caja')) cashOpen.value = true
+})
+
+const initials = computed(() => user.value?.fullName.split(' ').filter(Boolean).map(part => part[0]).slice(0, 2).join('').toUpperCase() || 'U')
+const roleLabel = computed(() => {
+  if (user.value?.role === 'SUPERADMIN') return 'Superadmin'
+  if (user.value?.role === 'ADMIN') return 'Administrador'
+  return 'Colaborador'
+})
+
+async function logout() {
+  await $fetch('/api/auth/logout', { method: 'POST' })
+  clearUser()
+  await navigateTo('/login')
+}
+</script>
+
+<template>
+  <div class="flex h-full flex-col bg-white px-4 py-6">
+    <div class="px-2"><BrandMark /></div>
+    <nav class="mt-10 flex-1 space-y-1" aria-label="Navegación principal">
+      <template v-for="item in items" :key="item.label">
+        <NuxtLink
+          :to="item.enabled ? item.to : route.fullPath"
+          class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
+          :class="item.enabled && route.path === item.to ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+          :aria-current="item.enabled && route.path === item.to ? 'page' : undefined"
+          :aria-disabled="!item.enabled" @click="$emit('navigate')"
+        >
+          <UIcon :name="item.icon" class="size-5 shrink-0" aria-hidden="true" />
+          <span>{{ item.label }}</span>
+          <UBadge v-if="!item.enabled" label="Pronto" color="neutral" variant="soft" size="sm" class="ml-auto" />
+        </NuxtLink>
+      </template>
+      <div>
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
+          :class="route.path.startsWith('/dashboard/salidas') ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+          :aria-expanded="exitsOpen"
+          aria-controls="exit-submenu"
+          @click="exitsOpen = !exitsOpen"
+        >
+          <UIcon name="i-lucide-package-minus" class="size-5 shrink-0" aria-hidden="true" />
+          <span>Salidas</span>
+          <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 transition-transform" :class="exitsOpen ? 'rotate-180' : ''" aria-hidden="true" />
+        </button>
+        <div v-if="exitsOpen" id="exit-submenu" class="mt-1 space-y-1 pl-4">
+          <NuxtLink
+            v-for="child in exitItems" :key="child.to" :to="child.to"
+            class="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium transition"
+            :class="route.path === child.to ? 'bg-[#f0f6f2] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+            :aria-current="route.path === child.to ? 'page' : undefined"
+            @click="$emit('navigate')"
+          >
+            <UIcon :name="child.icon" class="size-4 shrink-0" aria-hidden="true" />
+            <span>{{ child.label }}</span>
+          </NuxtLink>
+        </div>
+      </div>
+      <div>
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
+          :class="route.path.startsWith('/dashboard/caja') ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+          :aria-expanded="cashOpen"
+          aria-controls="cash-submenu"
+          @click="cashOpen = !cashOpen"
+        >
+          <UIcon name="ph:cash-register" class="size-5 shrink-0" aria-hidden="true" />
+          <span>Caja</span>
+          <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 transition-transform" :class="cashOpen ? 'rotate-180' : ''" aria-hidden="true" />
+        </button>
+        <div v-if="cashOpen" id="cash-submenu" class="mt-1 space-y-1 pl-4">
+          <NuxtLink
+            v-for="child in cashItems" :key="child.to" :to="child.to"
+            class="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium transition"
+            :class="route.path === child.to ? 'bg-[#f0f6f2] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+            :aria-current="route.path === child.to ? 'page' : undefined"
+            @click="$emit('navigate')"
+          >
+            <UIcon :name="child.icon" class="size-4 shrink-0" aria-hidden="true" />
+            <span>{{ child.label }}</span>
+          </NuxtLink>
+        </div>
+      </div>
+      <div v-if="canManageUsers" class="py-3">
+        <div class="mb-2 px-3 text-[11px] font-bold uppercase tracking-[.16em] text-[#9aa49e]">Administración</div>
+        <NuxtLink
+          v-for="item in adminItems" :key="item.to" :to="item.to"
+          class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
+          :class="route.path === item.to ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+          :aria-current="route.path === item.to ? 'page' : undefined"
+          @click="$emit('navigate')"
+        >
+          <UIcon :name="item.icon" class="size-5 shrink-0" aria-hidden="true" />
+          <span>{{ item.label }}</span>
+        </NuxtLink>
+      </div>
+    </nav>
+    <div class="border-t border-[#edf0ed] pt-4">
+      <div class="flex items-center gap-3 px-2">
+        <UAvatar :text="initials" size="md" class="bg-[#1f4937] text-white" />
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-semibold text-[#26322c]">{{ user?.fullName }}</p>
+          <p class="text-xs text-[#7a847e]">{{ roleLabel }}</p>
+        </div>
+        <UTooltip text="Cerrar sesión">
+          <UButton icon="i-lucide-log-out" color="neutral" variant="ghost" aria-label="Cerrar sesión" @click="logout" />
+        </UTooltip>
+      </div>
+    </div>
+  </div>
+</template>
