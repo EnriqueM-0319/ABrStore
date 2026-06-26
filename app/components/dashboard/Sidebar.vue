@@ -6,15 +6,15 @@ const route = useRoute()
 const { user, clearUser } = useAuth()
 const items = [
   { label: 'Punto de venta', icon: 'i-lucide-monitor-up', to: '/dashboard/ventas', enabled: true },
-  { label: 'Productos', icon: 'i-lucide-package', to: '/dashboard/productos', enabled: true },
-  { label: 'Historial de ventas', icon: 'i-lucide-receipt-text', to: '/dashboard/historial', enabled: true },
-  { label: 'Inventario', icon: 'i-lucide-warehouse', to: '/dashboard/inventario', enabled: true }
+  { label: 'Tickets guardados', icon: 'i-lucide-bookmark', to: '/dashboard/tickets-guardados', enabled: true },
+  { label: 'Historial de ventas', icon: 'i-lucide-receipt-text', to: '/dashboard/historial', enabled: true }
 ]
 const adminItems = [
   { label: 'Usuarios', icon: 'i-lucide-users', to: '/dashboard/usuarios', enabled: true },
   { label: 'Registrar usuario', icon: 'i-lucide-user-plus', to: '/registro', enabled: true }
 ]
-const exitItems = [
+const inventoryItems = [
+  { label: 'Productos', icon: 'i-lucide-package', to: '/dashboard/productos' },
   { label: 'Registrar salida', icon: 'i-lucide-package-minus', to: '/dashboard/salidas' },
   { label: 'Historial de salidas', icon: 'i-lucide-list', to: '/dashboard/salidas/historial' }
 ]
@@ -23,12 +23,12 @@ const cashItems = [
   { label: 'Movimientos', icon: 'i-lucide-wallet-cards', to: '/dashboard/caja/movimientos' },
   { label: 'Cierre de caja', icon: 'i-lucide-calculator', to: '/dashboard/caja/cierre' }
 ]
-const exitsOpen = ref(route.path.startsWith('/dashboard/salidas'))
+const inventoryOpen = ref(['/dashboard/inventario', '/dashboard/productos'].includes(route.path) || route.path.startsWith('/dashboard/salidas'))
 const cashOpen = ref(route.path.startsWith('/dashboard/caja'))
 const canManageUsers = computed(() => ['SUPERADMIN', 'ADMIN'].includes(user.value?.role || ''))
 
 watch(() => route.path, (path) => {
-  if (path.startsWith('/dashboard/salidas')) exitsOpen.value = true
+  if (['/dashboard/inventario', '/dashboard/productos'].includes(path) || path.startsWith('/dashboard/salidas')) inventoryOpen.value = true
   if (path.startsWith('/dashboard/caja')) cashOpen.value = true
 })
 
@@ -67,18 +67,18 @@ async function logout() {
         <button
           type="button"
           class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
-          :class="route.path.startsWith('/dashboard/salidas') ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
-          :aria-expanded="exitsOpen"
-          aria-controls="exit-submenu"
-          @click="exitsOpen = !exitsOpen"
+          :class="['/dashboard/inventario', '/dashboard/productos'].includes(route.path) || route.path.startsWith('/dashboard/salidas') ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+          :aria-expanded="inventoryOpen"
+          aria-controls="inventory-submenu"
+          @click="inventoryOpen = !inventoryOpen"
         >
-          <UIcon name="i-lucide-package-minus" class="size-5 shrink-0" aria-hidden="true" />
-          <span>Salidas</span>
-          <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 transition-transform" :class="exitsOpen ? 'rotate-180' : ''" aria-hidden="true" />
+          <UIcon name="i-lucide-warehouse" class="size-5 shrink-0" aria-hidden="true" />
+          <span>Inventario</span>
+          <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 transition-transform" :class="inventoryOpen ? 'rotate-180' : ''" aria-hidden="true" />
         </button>
-        <div v-if="exitsOpen" id="exit-submenu" class="mt-1 space-y-1 pl-4">
+        <div v-if="inventoryOpen" id="inventory-submenu" class="mt-1 space-y-1 pl-4">
           <NuxtLink
-            v-for="child in exitItems" :key="child.to" :to="child.to"
+            v-for="child in inventoryItems" :key="child.to" :to="child.to"
             class="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium transition"
             :class="route.path === child.to ? 'bg-[#f0f6f2] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
             :aria-current="route.path === child.to ? 'page' : undefined"

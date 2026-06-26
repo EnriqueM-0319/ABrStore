@@ -37,7 +37,9 @@ export function serializeSale(sale: SaleWithItems, currentCashSessionId?: string
       unit: item.unit,
       quantity: item.quantity.toNumber(),
       unitPrice: item.unitPrice.toNumber(),
-      lineTotal: item.lineTotal.toNumber()
+      lineTotal: item.lineTotal.toNumber(),
+      canceledAt: item.canceledAt?.toISOString() ?? null,
+      cancelReason: item.cancelReason
     }))
   }
 }

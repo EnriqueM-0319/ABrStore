@@ -13,6 +13,8 @@ export type SaleTicketItem = {
   quantity: number
   unitPrice: number
   lineTotal: number
+  canceledAt: string | null
+  cancelReason: string | null
 }
 
 export type SaleTicket = {

@@ -35,6 +35,7 @@ export default defineEventHandler(async (event) => {
     }
 
     for (const item of saleToCancel.items) {
+      if (item.canceledAt) continue
       if (!item.productId) continue
       await tx.product.update({
         where: { id: item.productId },

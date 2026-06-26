@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client'
 import { requireRole } from '../../utils/auth'
 import { operationalRoles } from '../../utils/users'
 import prisma from '../../../lib/prisma'
@@ -9,6 +10,19 @@ function getPositiveInteger(value: unknown, fallback: number) {
   const parsed = Number(value)
   if (!Number.isFinite(parsed)) return fallback
   return Math.max(Math.trunc(parsed), 1)
+}
+
+type ProductRow = {
+  id: string
+  sku: string
+  name: string
+  description: string | null
+  costPrice: Prisma.Decimal
+  profitMargin: Prisma.Decimal
+  price: Prisma.Decimal
+  unit: 'PIECE' | 'KILOGRAM'
+  stock: Prisma.Decimal
+  active: boolean
 }
 
 export default defineEventHandler(async (event) => {
@@ -30,16 +44,31 @@ export default defineEventHandler(async (event) => {
         ]
       }
     : undefined
+  const sqlWhere = search
+    ? Prisma.sql`WHERE "name" ILIKE ${`%${search}%`} OR "sku" ILIKE ${`%${search}%`} OR "description" ILIKE ${`%${search}%`}`
+    : Prisma.empty
 
   const [total, products] = await prisma.$transaction([
     prisma.product.count({ where }),
-    prisma.product.findMany({
-      where,
-      select: { id: true, sku: true, name: true, description: true, costPrice: true, profitMargin: true, price: true, unit: true, stock: true, active: true },
-      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
-      skip,
-      take: limit
-    })
+    prisma.$queryRaw<ProductRow[]>`
+      SELECT id, sku, name, description, "costPrice", "profitMargin", price, unit, stock, active
+      FROM "Product"
+      ${sqlWhere}
+      ORDER BY
+        CASE
+          WHEN sku ~ '^[0-9]' THEN 0
+          WHEN sku ~ '^[A-Za-z]' THEN 1
+          ELSE 2
+        END,
+        CASE
+          WHEN sku ~ '^[0-9]' THEN substring(sku from '^[0-9]+')::numeric
+          ELSE NULL
+        END,
+        lower(sku),
+        id
+      LIMIT ${limit}
+      OFFSET ${skip}
+    `
   ])
 
   return {

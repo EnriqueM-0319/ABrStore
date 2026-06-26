@@ -1,7 +1,8 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ eyebrow?: string; title?: string }>(), {
+withDefaults(defineProps<{ eyebrow?: string; title?: string; hideHeader?: boolean }>(), {
   eyebrow: 'Panel de inventario',
-  title: 'Resumen general'
+  title: 'Resumen general',
+  hideHeader: false
 })
 const mobileMenuOpen = ref(false)
 const { user } = useAuth()
@@ -25,7 +26,7 @@ const roleLabel = computed(() => {
     </USlideover>
 
     <div class="min-w-0 flex-1">
-      <header class="sticky top-0 z-20 flex h-18 items-center justify-between border-b border-[#e5e8e5] bg-white/95 px-4 backdrop-blur sm:px-6 lg:h-20 lg:px-8">
+      <header v-if="!hideHeader" class="sticky top-0 z-20 flex h-18 items-center justify-between border-b border-[#e5e8e5] bg-white/95 px-4 backdrop-blur sm:px-6 lg:h-20 lg:px-8">
         <div class="flex min-w-0 items-center gap-3">
           <UButton class="lg:hidden" icon="i-lucide-menu" color="neutral" variant="ghost" aria-label="Abrir menú principal" @click="mobileMenuOpen = true" />
           <div class="min-w-0"><p class="hidden text-sm text-[#78827c] sm:block">{{ eyebrow }}</p><h1 class="truncate text-lg font-bold tracking-tight sm:text-xl">{{ title }}</h1></div>
@@ -35,6 +36,9 @@ const roleLabel = computed(() => {
           <UAvatar :text="initials" size="md" class="bg-[#1f4937] text-white lg:hidden" />
         </div>
       </header>
+      <div v-else class="sticky top-0 z-20 border-b border-[#e5e8e5] bg-white/95 px-3 py-2 backdrop-blur lg:hidden">
+        <UButton icon="i-lucide-menu" color="neutral" variant="ghost" aria-label="Abrir menú principal" @click="mobileMenuOpen = true" />
+      </div>
       <main id="main-content" tabindex="-1"><slot /></main>
     </div>
   </div>

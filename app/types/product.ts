@@ -13,6 +13,7 @@ export type Product = {
 
 export type CartItem = Product & {
   quantity: number
+  isManual?: boolean
 }
 
 export type InventoryPaginatedResponse = {

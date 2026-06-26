@@ -4,103 +4,189 @@ import type { Product } from '~/types/product'
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Productos' })
 
-const form = reactive({ sku: '', name: '', description: '', costPrice: '', profitMargin: '30', price: '', unit: 'PIECE' as Product['unit'], stock: '' })
-const autoPrice = ref(true)
-const saving = ref(false)
-const formError = ref('')
-const success = ref('')
-const lastCreatedProduct = ref<Product | null>(null)
+const selectedProduct = ref<Product | null>(null)
+const productModalOpen = ref(false)
+const productToDelete = ref<Product | null>(null)
+const deleteModalOpen = ref(false)
+const deleting = ref(false)
+const deleteError = ref('')
 const toast = useToast()
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
-const unitOptions = [{ label: 'Por pieza', value: 'PIECE' }, { label: 'Por kilogramo', value: 'KILOGRAM' }]
+const limitOptions = [{ label: '10 por página', value: 10 }, { label: '20 por página', value: 20 }, { label: '30 por página', value: 30 }, { label: '50 por página', value: 50 }]
+const {
+  search,
+  debouncedSearch,
+  products,
+  page,
+  limit,
+  total,
+  pageCount,
+  pageStart,
+  pageEnd,
+  inventoryError,
+  isInitialLoading,
+  isRefreshing,
+  loadInventory,
+  goToPage,
+  updateProductInPage,
+  removeProductFromPage
+} = useInventory()
 
-watch([() => form.costPrice, () => form.profitMargin, autoPrice], () => {
-  if (!autoPrice.value) return
-  const cost = Number(form.costPrice)
-  const margin = Number(form.profitMargin)
-  form.price = calculatePublicPriceFromMargin(cost, margin)
-})
-
-function setManualPrice(value: string | number) {
-  form.price = String(value)
-  autoPrice.value = false
-  const cost = Number(form.costPrice)
-  const publicPrice = Number(form.price)
-  const margin = calculateMarginFromPublicPrice(cost, publicPrice)
-  if (margin) form.profitMargin = margin
+function openCreateModal() {
+  selectedProduct.value = null
+  productModalOpen.value = true
 }
 
-async function saveProduct() {
-  formError.value = ''
-  success.value = ''
-  saving.value = true
+function openEditModal(product: Product) {
+  selectedProduct.value = product
+  productModalOpen.value = true
+}
+
+function handleProductSaved(product: Product) {
+  if (selectedProduct.value) updateProductInPage(product)
+  else void loadInventory()
+}
+
+function askDeleteProduct(product: Product) {
+  productToDelete.value = product
+  deleteError.value = ''
+  deleteModalOpen.value = true
+}
+
+async function permanentlyDeleteProduct() {
+  if (!productToDelete.value) return
+
+  deleting.value = true
+  deleteError.value = ''
+
   try {
-    const product = await $fetch<Product>('/api/products', { method: 'POST', body: form })
-    lastCreatedProduct.value = product
-    Object.assign(form, { sku: '', name: '', description: '', costPrice: '', profitMargin: '30', price: '', unit: 'PIECE', stock: '' })
-    autoPrice.value = true
-    success.value = 'Producto registrado. Ya está disponible en el punto de venta.'
-    toast.add({ title: 'Producto registrado', description: `${product.name} ya está disponible para vender.`, color: 'success', icon: 'i-lucide-circle-check' })
+    const deletedProduct = productToDelete.value
+    await $fetch(`/api/products/${deletedProduct.id}`, { method: 'DELETE', query: { permanent: true } })
+    removeProductFromPage(deletedProduct.id)
+    deleteModalOpen.value = false
+    productToDelete.value = null
+    toast.add({ title: 'Producto eliminado', description: `${deletedProduct.name} fue borrado de la base de datos.`, color: 'success', icon: 'i-lucide-trash-2' })
   } catch (error: unknown) {
-    formError.value = getErrorMessage(error, 'No pudimos registrar el producto.')
-    toast.add({ title: 'No se pudo registrar', description: formError.value, color: 'error', icon: 'i-lucide-circle-alert' })
+    deleteError.value = getErrorMessage(error, 'No pudimos eliminar permanentemente el producto.')
+    toast.add({ title: 'No se pudo eliminar', description: deleteError.value, color: 'error', icon: 'i-lucide-circle-alert' })
   } finally {
-    saving.value = false
+    deleting.value = false
   }
 }
 </script>
 
 <template>
-  <DashboardShell eyebrow="Catálogo" title="Productos">
+  <DashboardShell eyebrow="Inventario" title="Productos">
     <div class="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
-      <div class="grid items-start gap-6 xl:grid-cols-[minmax(20rem,.75fr)_minmax(0,1fr)]">
-        <UCard :ui="{ root: 'rounded-2xl ring-[#dfe5e0]', header: 'p-5 sm:px-6', body: 'p-5 sm:px-6' }">
-          <template #header><h2 class="text-lg font-bold">Añadir producto</h2><p class="mt-1 text-sm text-[#77827b]">Completa los datos para agregarlo al inventario.</p></template>
-          <form class="space-y-4" @submit.prevent="saveProduct">
-            <FormField v-model="form.sku" name="sku" label="Código SKU" placeholder="Ej. CAM-001" autocomplete="off" />
-            <FormField v-model="form.name" name="name" label="Nombre del producto" placeholder="Ej. Camiseta básica" autocomplete="off" />
-            <UFormField label="Descripción" name="description">
-              <UTextarea v-model="form.description" placeholder="Detalles breves del producto" :rows="3" class="w-full" :maxlength="300" />
-            </UFormField>
-            <div class="grid grid-cols-2 gap-3">
-              <FormField v-model="form.costPrice" name="costPrice" label="Costo unitario" type="number" placeholder="0.00" autocomplete="off" />
-              <FormField v-model="form.profitMargin" name="profitMargin" label="Ganancia (%)" type="number" placeholder="30" autocomplete="off" />
-            </div>
-            <div class="rounded-xl border border-[#e2e7e3] bg-[#f8faf8] p-4">
-              <div class="mb-3 flex items-center justify-between gap-3"><div><p class="text-sm font-semibold">Calcular precio automáticamente</p><p class="text-xs text-[#78827c]">Costo ÷ porcentaje restante</p></div><USwitch v-model="autoPrice" aria-label="Calcular precio al público automáticamente" /></div>
-              <UFormField label="Precio al público" name="price" required><UInput :model-value="form.price" type="number" inputmode="decimal" placeholder="0.00" size="xl" class="w-full" @update:model-value="setManualPrice" /></UFormField>
-            </div>
-            <div class="grid grid-cols-2 gap-3"><UFormField label="Unidad de venta" name="unit" required><USelect v-model="form.unit" :items="unitOptions" value-key="value" label-key="label" size="xl" class="w-full" /></UFormField><FormField v-model="form.stock" name="stock" label="Existencias iniciales" type="number" placeholder="0" autocomplete="off" min="0" :step="form.unit === 'PIECE' ? '1' : '0.001'" /></div>
-            <ActionFeedback v-if="formError" :message="formError" type="error" @dismiss="formError = ''" />
-            <ActionFeedback v-if="success" :message="success" @dismiss="success = ''" />
-            <UButton type="submit" block size="xl" icon="i-lucide-package-plus" label="Guardar producto" :loading="saving" class="rounded-xl" />
-          </form>
-        </UCard>
-
-        <section aria-labelledby="last-product-title">
-          <div class="mb-4 flex items-end justify-between"><div><h2 id="last-product-title" class="text-xl font-bold">Último producto creado</h2><p class="mt-1 text-sm text-[#77827b]">Aquí verás solo la confirmación del producto más reciente.</p></div><UButton to="/dashboard/ventas" label="Ir a vender" icon="i-lucide-shopping-cart" variant="soft" /></div>
-          <div v-if="!lastCreatedProduct" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white p-10 text-center">
-            <UIcon name="i-lucide-package-plus" class="mx-auto size-9 text-[#929d96]" />
-            <h3 class="mt-4 font-semibold">Aún no has creado producto en esta sesión</h3>
-            <p class="mx-auto mt-1 max-w-sm text-sm text-[#7d8781]">Al guardar uno, aparecerá aquí sin cargar todo el catálogo. Para modificar o eliminar productos usa Inventario.</p>
-            <UButton to="/dashboard/inventario" label="Abrir inventario" icon="i-lucide-warehouse" variant="soft" class="mt-5" />
+      <section aria-labelledby="products-title" :aria-busy="isInitialLoading || isRefreshing">
+        <div class="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 id="products-title" class="text-xl font-bold">Productos registrados</h2>
+            <p class="mt-1 text-sm text-[#78827c]">Busca, agrega, edita o elimina productos desde un solo lugar.</p>
           </div>
-          <UCard v-else :ui="{ root: 'rounded-2xl ring-[#dfe5e0]', body: 'p-5 sm:p-6' }">
-            <div class="flex flex-col gap-5 sm:flex-row sm:items-start">
-              <span class="grid size-14 shrink-0 place-items-center rounded-2xl bg-[#edf3ef] text-[#2b6049]"><UIcon name="i-lucide-package-check" class="size-7" /></span>
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2"><h3 class="truncate text-lg font-bold">{{ lastCreatedProduct.name }}</h3><UBadge :label="lastCreatedProduct.sku" color="neutral" variant="soft" /></div>
-                <p class="mt-2 text-sm text-[#7d8781]">{{ lastCreatedProduct.description || 'Sin descripción' }}</p>
-                <div class="mt-5 grid gap-3 sm:grid-cols-3">
-                  <div class="rounded-xl bg-[#f7faf8] p-3"><p class="text-xs text-[#77827b]">Precio público</p><p class="mt-1 font-bold">{{ currency.format(lastCreatedProduct.price) }}</p></div>
-                  <div class="rounded-xl bg-[#f7faf8] p-3"><p class="text-xs text-[#77827b]">Existencias</p><p class="mt-1 font-bold">{{ lastCreatedProduct.stock }} {{ lastCreatedProduct.unit === 'KILOGRAM' ? 'kg' : 'pzas' }}</p></div>
-                  <div class="rounded-xl bg-[#f7faf8] p-3"><p class="text-xs text-[#77827b]">Venta</p><p class="mt-1 font-bold">{{ lastCreatedProduct.unit === 'KILOGRAM' ? 'Por kg' : 'Por pieza' }}</p></div>
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <UInput v-model="search" icon="i-lucide-search" placeholder="Buscar por nombre o SKU" aria-label="Buscar productos" class="w-full sm:w-80" />
+            <UButton label="Agregar producto" icon="i-lucide-package-plus" @click="openCreateModal" />
+          </div>
+        </div>
+
+        <UAlert v-if="inventoryError" class="mb-3" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar productos" :description="inventoryError">
+          <template #actions>
+            <UButton label="Reintentar" color="error" variant="soft" size="sm" @click="loadInventory()" />
+          </template>
+        </UAlert>
+
+        <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+          <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" aria-hidden="true" />
+          <span>{{ debouncedSearch ? 'Buscando productos…' : 'Actualizando productos…' }}</span>
+        </div>
+
+        <USkeleton v-if="isInitialLoading" class="h-96 rounded-2xl" />
+        <div v-else-if="!products.length" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white p-12 text-center">
+          <UIcon name="i-lucide-package-search" class="mx-auto size-8 text-[#929d96]" />
+          <h3 class="mt-4 font-semibold">No hay productos que mostrar</h3>
+          <p class="mx-auto mt-1 max-w-sm text-sm text-[#7d8781]">Agrega un producto o intenta con otra búsqueda.</p>
+          <UButton label="Agregar producto" icon="i-lucide-package-plus" class="mt-5" @click="openCreateModal" />
+        </div>
+
+        <div v-else class="overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
+          <ul class="divide-y divide-[#edf0ed]" aria-label="Productos registrados">
+            <li v-for="product in products" :key="product.id" class="p-4 sm:px-5">
+              <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex min-w-0 items-start gap-3">
+                  <span class="grid size-10 shrink-0 place-items-center rounded-xl" :class="product.active ? 'bg-[#eaf2ed] text-[#286047]' : 'bg-stone-100 text-stone-400'">
+                    <UIcon name="i-lucide-package" class="size-5" aria-hidden="true" />
+                  </span>
+                  <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="truncate text-sm font-semibold">{{ product.name }}</h3>
+                      <UBadge :label="product.active ? 'Activo' : 'Inactivo'" :color="product.active ? 'success' : 'neutral'" variant="soft" size="sm" />
+                      <UBadge :label="product.sku" color="neutral" variant="soft" size="sm" />
+                    </div>
+                    <p class="mt-1 line-clamp-1 text-xs text-[#7d8781]">{{ product.description || 'Sin descripción' }}</p>
+                  </div>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[28rem] lg:items-center">
+                  <div>
+                    <p class="text-[11px] uppercase tracking-wide text-[#8b958f]">Precio</p>
+                    <p class="text-sm font-bold text-[#1f4937]">{{ currency.format(product.price) }} / {{ product.unit === 'KILOGRAM' ? 'kg' : 'pza' }}</p>
+                  </div>
+                  <div>
+                    <p class="text-[11px] uppercase tracking-wide text-[#8b958f]">Existencias</p>
+                    <p class="text-sm font-semibold" :class="product.stock <= 5 && product.active ? 'text-amber-600' : 'text-[#536057]'">{{ product.stock }} {{ product.unit === 'KILOGRAM' ? 'kg' : 'pzas' }}</p>
+                  </div>
+                  <div class="flex gap-2 sm:justify-end">
+                    <UButton label="Editar" icon="i-lucide-pencil" size="sm" variant="soft" @click="openEditModal(product)" />
+                    <UButton label="Eliminar" icon="i-lucide-trash-2" size="sm" color="error" variant="soft" @click="askDeleteProduct(product)" />
+                  </div>
                 </div>
               </div>
+            </li>
+          </ul>
+
+          <div class="flex flex-col gap-4 border-t border-[#edf0ed] bg-[#fbfcfb] p-4 lg:flex-row lg:items-end lg:justify-between">
+            <p class="text-sm text-[#7d8781]" role="status" aria-live="polite">
+              Mostrando {{ pageStart }}-{{ pageEnd }} de {{ total }} productos
+            </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <UFormField label="Mostrar" name="products-limit" size="xs">
+                <USelect v-model="limit" :items="limitOptions" value-key="value" label-key="label" aria-label="Productos por página" class="w-full sm:w-44" />
+              </UFormField>
+              <nav class="flex items-center justify-center gap-2" aria-label="Paginación de productos">
+                <UButton type="button" icon="i-lucide-chevron-left" label="Anterior" color="neutral" variant="soft" :disabled="page <= 1 || isRefreshing" @click="goToPage(page - 1)" />
+                <span class="min-w-24 text-center text-sm font-semibold text-[#536057]">Página {{ page }} de {{ pageCount }}</span>
+                <UButton type="button" trailing-icon="i-lucide-chevron-right" label="Siguiente" color="neutral" variant="soft" :disabled="page >= pageCount || isRefreshing" @click="goToPage(page + 1)" />
+              </nav>
             </div>
-          </UCard>
-        </section>
-      </div>
+          </div>
+        </div>
+      </section>
+
+      <ProductsProductFormModal
+        v-model:open="productModalOpen"
+        :product="selectedProduct"
+        @saved="handleProductSaved"
+        @deactivated="updateProductInPage"
+      />
+
+      <UModal v-model:open="deleteModalOpen" title="Eliminar producto" description="Esta acción borra el producto de la base de datos.">
+        <template #body>
+          <div class="space-y-4">
+            <p class="text-sm text-[#68746d]">
+              ¿Seguro que deseas eliminar permanentemente <span class="font-semibold text-[#202b25]">{{ productToDelete?.name }}</span>?
+            </p>
+            <UAlert color="error" variant="soft" icon="i-lucide-triangle-alert" title="No se puede deshacer" description="Si solo quieres ocultarlo de ventas, usa Desactivar producto desde Editar." />
+            <ActionFeedback v-if="deleteError" :message="deleteError" type="error" @dismiss="deleteError = ''" />
+          </div>
+        </template>
+        <template #footer>
+          <div class="flex w-full justify-end gap-2">
+            <UButton label="Cancelar" color="neutral" variant="ghost" @click="deleteModalOpen = false" />
+            <UButton label="Sí, eliminar" icon="i-lucide-trash-2" color="error" :loading="deleting" @click="permanentlyDeleteProduct" />
+          </div>
+        </template>
+      </UModal>
     </div>
   </DashboardShell>
 </template>

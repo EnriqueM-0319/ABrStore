@@ -7,6 +7,10 @@ import prisma from '../../../lib/prisma'
 type HeldTicketRequestItem = {
   productId?: unknown
   quantity?: unknown
+  manual?: unknown
+  name?: unknown
+  price?: unknown
+  unit?: unknown
 }
 
 const paymentMethods = ['CASH', 'CARD', 'TRANSFER'] as const
@@ -25,14 +29,20 @@ export default defineEventHandler(async (event) => {
 
   const requestedItems = items.map(item => ({
     productId: String(item.productId || ''),
-    quantity: Number(item.quantity)
+    quantity: Number(item.quantity),
+    manual: item.manual === true,
+    name: String(item.name || '').trim().slice(0, 80),
+    price: Number(item.price),
+    unit: item.unit === 'KILOGRAM' ? 'KILOGRAM' as const : 'PIECE' as const
   }))
 
-  if (requestedItems.some(item => !item.productId || !Number.isFinite(item.quantity) || item.quantity <= 0)) {
+  if (requestedItems.some(item => item.manual
+    ? item.name.length < 2 || !Number.isFinite(item.price) || item.price <= 0
+    : !item.productId || !Number.isFinite(item.quantity) || item.quantity <= 0)) {
     throw createError({ statusCode: 400, message: 'Revisa las cantidades del ticket.' })
   }
 
-  const productIds = [...new Set(requestedItems.map(item => item.productId))]
+  const productIds = [...new Set(requestedItems.filter(item => !item.manual).map(item => item.productId))]
 
   const ticket = await prisma.$transaction(async (tx) => {
     const cashSession = await tx.cashRegisterSession.findFirst({
@@ -48,13 +58,30 @@ export default defineEventHandler(async (event) => {
     const productMap = new Map(products.map(product => [product.id, product]))
 
     const ticketItems = requestedItems.map(item => {
+      if (item.manual) {
+        const quantity = new Prisma.Decimal(1)
+        const lineTotal = new Prisma.Decimal(item.price.toFixed(2))
+        return {
+          product: null,
+          quantity,
+          lineTotal,
+          manual: {
+            sku: 'SIN-CODIGO',
+            name: item.name,
+            description: 'Venta sin código',
+            unit: item.unit,
+            unitPrice: lineTotal
+          }
+        }
+      }
+
       const product = productMap.get(item.productId)
       if (!product) throw createError({ statusCode: 404, message: 'Uno de los productos ya no está disponible.' })
       if (product.unit === 'PIECE' && !Number.isInteger(item.quantity)) throw createError({ statusCode: 400, message: `${product.name} solo se puede vender por pieza.` })
 
       const quantity = new Prisma.Decimal(product.unit === 'KILOGRAM' ? item.quantity.toFixed(3) : item.quantity.toFixed(0))
       const lineTotal = product.price.mul(quantity).toDecimalPlaces(2)
-      return { product, quantity, lineTotal }
+      return { product, quantity, lineTotal, manual: null }
     })
 
     const total = ticketItems.reduce((sum, item) => sum.add(item.lineTotal), new Prisma.Decimal(0)).toDecimalPlaces(2)
@@ -70,13 +97,13 @@ export default defineEventHandler(async (event) => {
         createdById: user.id,
         items: {
           create: ticketItems.map(item => ({
-            productId: item.product.id,
-            sku: item.product.sku,
-            name: item.product.name,
-            description: item.product.description,
-            unit: item.product.unit,
+            productId: item.product?.id ?? null,
+            sku: item.product?.sku ?? item.manual?.sku ?? 'SIN-CODIGO',
+            name: item.product?.name ?? item.manual?.name ?? 'Venta sin código',
+            description: item.product?.description ?? item.manual?.description ?? null,
+            unit: item.product?.unit ?? item.manual?.unit ?? 'PIECE',
             quantity: item.quantity,
-            unitPrice: item.product.price,
+            unitPrice: item.product?.price ?? item.manual?.unitPrice ?? item.lineTotal,
             lineTotal: item.lineTotal
           }))
         }

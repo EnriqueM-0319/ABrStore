@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SaleTicket, SalesHistoryResponse } from '~/types/sale'
+import type { SaleTicket, SaleTicketItem, SalesHistoryResponse } from '~/types/sale'
 
 definePageMeta({ middleware: 'auth' })
 useHead({ title: 'Historial de ventas' })
@@ -11,6 +11,11 @@ const detailOpen = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
 const cancelError = ref('')
+const itemCancelOpen = ref(false)
+const selectedItemToCancel = ref<SaleTicketItem | null>(null)
+const itemCancelReason = ref('')
+const itemCancelling = ref(false)
+const itemCancelError = ref('')
 const toast = useToast()
 const limitOptions = [{ label: '10 por página', value: 10 }, { label: '20 por página', value: 20 }, { label: '50 por página', value: 50 }]
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -97,6 +102,9 @@ function openDetail(sale: SaleTicket) {
   selectedSale.value = sale
   cancelReason.value = ''
   cancelError.value = ''
+  selectedItemToCancel.value = null
+  itemCancelReason.value = ''
+  itemCancelError.value = ''
   detailOpen.value = true
 }
 
@@ -124,6 +132,38 @@ async function cancelSale() {
     toast.add({ title: 'No se pudo cancelar', description: cancelError.value, color: 'error', icon: 'i-lucide-circle-alert' })
   } finally {
     cancelling.value = false
+  }
+}
+
+function openItemCancel(item: SaleTicketItem) {
+  selectedItemToCancel.value = item
+  itemCancelReason.value = ''
+  itemCancelError.value = ''
+  itemCancelOpen.value = true
+}
+
+async function cancelSaleItem() {
+  if (!selectedSale.value || !selectedItemToCancel.value || itemCancelling.value) return
+
+  itemCancelling.value = true
+  itemCancelError.value = ''
+
+  try {
+    const updatedSale = await $fetch<SaleTicket>(`/api/sales/${selectedSale.value.id}/items/${selectedItemToCancel.value.id}/cancel`, {
+      method: 'POST',
+      body: { reason: itemCancelReason.value }
+    })
+    selectedSale.value = updatedSale
+    itemCancelOpen.value = false
+    selectedItemToCancel.value = null
+    itemCancelReason.value = ''
+    toast.add({ title: 'Producto cancelado', description: 'La partida fue cancelada y el ticket se actualizó.', color: 'success', icon: 'i-lucide-undo-2' })
+    await refresh()
+  } catch (error: unknown) {
+    itemCancelError.value = getErrorMessage(error, 'No pudimos cancelar la partida.')
+    toast.add({ title: 'No se pudo cancelar', description: itemCancelError.value, color: 'error', icon: 'i-lucide-circle-alert' })
+  } finally {
+    itemCancelling.value = false
   }
 }
 </script>
@@ -228,13 +268,29 @@ async function cancelSale() {
             </div>
             <div class="overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
               <ul class="divide-y divide-[#edf0ed]">
-                <li v-for="item in selectedSale.items" :key="item.id" class="p-4">
+                <li v-for="item in selectedSale.items" :key="item.id" class="p-4" :class="item.canceledAt ? 'bg-red-50/60' : ''">
                   <div class="flex justify-between gap-4">
                     <div class="min-w-0">
-                      <p class="truncate text-sm font-semibold">{{ item.name }}</p>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <p class="truncate text-sm font-semibold" :class="item.canceledAt ? 'text-red-800 line-through' : ''">{{ item.name }}</p>
+                        <UBadge v-if="item.canceledAt" label="Cancelado" color="error" variant="soft" size="sm" />
+                      </div>
                       <p class="mt-1 text-xs text-[#7d8781]">{{ item.sku }} · {{ item.quantity }} {{ item.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} × {{ currency.format(item.unitPrice) }}</p>
+                      <p v-if="item.cancelReason" class="mt-1 text-xs text-red-700">Motivo: {{ item.cancelReason }}</p>
                     </div>
-                    <p class="whitespace-nowrap text-sm font-bold">{{ currency.format(item.lineTotal) }}</p>
+                    <div class="shrink-0 text-right">
+                      <p class="whitespace-nowrap text-sm font-bold" :class="item.canceledAt ? 'text-red-700 line-through' : ''">{{ currency.format(item.lineTotal) }}</p>
+                      <UButton
+                        v-if="selectedSale.canCancel && !item.canceledAt && !selectedSale.canceledAt"
+                        label="Cancelar"
+                        icon="i-lucide-undo-2"
+                        color="error"
+                        variant="ghost"
+                        size="xs"
+                        class="mt-2"
+                        @click="openItemCancel(item)"
+                      />
+                    </div>
                   </div>
                 </li>
               </ul>
@@ -267,6 +323,32 @@ async function cancelSale() {
           </div>
         </template>
       </USlideover>
+
+      <UModal v-model:open="itemCancelOpen" title="Cancelar producto" description="Cancela únicamente esta partida del ticket.">
+        <template #body>
+          <div class="space-y-4">
+            <div v-if="selectedItemToCancel" class="rounded-xl bg-[#f7faf8] p-3 text-sm">
+              <p class="font-semibold">{{ selectedItemToCancel.name }}</p>
+              <p class="mt-1 text-xs text-[#7d8781]">
+                {{ selectedItemToCancel.sku }} · {{ currency.format(selectedItemToCancel.lineTotal) }}
+              </p>
+            </div>
+            <UFormField label="Motivo" name="itemCancelReason" required>
+              <UTextarea v-model="itemCancelReason" :rows="3" placeholder="Ej. Cliente devolvió este producto, error de captura…" class="w-full" />
+            </UFormField>
+            <ActionFeedback v-if="itemCancelError" :message="itemCancelError" type="error" @dismiss="itemCancelError = ''" />
+            <p class="text-xs text-[#7d8781]">
+              Si el producto pertenece al inventario, su stock regresará automáticamente. El total del ticket se recalculará.
+            </p>
+          </div>
+        </template>
+        <template #footer>
+          <div class="flex w-full justify-end gap-2">
+            <UButton label="Cerrar" color="neutral" variant="ghost" @click="itemCancelOpen = false" />
+            <UButton label="Cancelar producto" icon="i-lucide-undo-2" color="error" :loading="itemCancelling" @click="cancelSaleItem" />
+          </div>
+        </template>
+      </UModal>
     </div>
   </DashboardShell>
 </template>

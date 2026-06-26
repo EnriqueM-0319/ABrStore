@@ -15,8 +15,7 @@ export default defineEventHandler(async (event) => {
       stock: { gt: 0 },
       OR: [
         { name: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } }
+        { sku: { contains: search, mode: 'insensitive' } }
       ]
     },
     select: { id: true, sku: true, name: true, description: true, price: true, unit: true, stock: true },
