@@ -1,0 +1,38 @@
+{
+  "name": "ABR Store - Sistema de control",
+  "short_name": "ABR Store",
+  "description": "Sistema de punto de venta, inventario y caja para ABR Store.",
+  "id": "/",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f6f7f5",
+  "theme_color": "#1f4937",
+  "categories": ["business", "productivity"],
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Punto de venta",
+      "short_name": "Venta",
+      "description": "Abrir el punto de venta.",
+      "url": "/dashboard/ventas",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Productos",
+      "short_name": "Productos",
+      "description": "Abrir el inventario de productos.",
+      "url": "/dashboard/productos",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

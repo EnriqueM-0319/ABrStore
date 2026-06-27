@@ -20,6 +20,7 @@ const checkoutError = ref('')
 const heldTicketError = ref('')
 const ticket = ref<SaleTicket | null>(null)
 const ticketOpen = ref(false)
+const productSearchInput = ref<{ $el?: HTMLElement } | null>(null)
 const manualProductOpen = ref(false)
 const manualProductForm = reactive({
   name: '',
@@ -57,9 +58,13 @@ onMounted(async () => {
   await initCashSession()
   await initHeldTickets()
   applyRecoveredTicket()
+  focusProductSearch()
 })
 watch(cashSessionId, () => {
   void initHeldTickets()
+})
+watch([manualProductOpen, ticketOpen], ([manualOpen, saleTicketOpen]) => {
+  if (!manualOpen && !saleTicketOpen) focusProductSearch()
 })
 
 const itemCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0))
@@ -144,6 +149,26 @@ function clearProductSearch() {
   search.value = ''
   debouncedSearch.value = ''
   products.value = []
+  focusProductSearch()
+}
+
+function focusProductSearch() {
+  if (!import.meta.client || manualProductOpen.value || ticketOpen.value) return
+
+  void nextTick(() => {
+    const input = productSearchInput.value?.$el?.querySelector('input')
+    input?.focus()
+  })
+}
+
+function keepScannerFocus() {
+  if (!import.meta.client) return
+
+  window.setTimeout(() => {
+    const activeElement = document.activeElement
+    const shouldRecoverFocus = !activeElement || activeElement === document.body || activeElement.id === 'main-content'
+    if (shouldRecoverFocus) focusProductSearch()
+  }, 80)
 }
 
 function getQuantityStep(item: CartItem) {
@@ -207,6 +232,20 @@ function formatQuantityDraft(item: CartItem) {
 function clearCart() {
   cart.value = []
   quantityDrafts.value = {}
+  focusProductSearch()
+}
+
+function removeCartItem(item: CartItem) {
+  cart.value = cart.value.filter(current => current.id !== item.id)
+  const { [item.id]: _removedDraft, ...remainingDrafts } = quantityDrafts.value
+  quantityDrafts.value = remainingDrafts
+  toast.add({
+    title: 'Producto retirado',
+    description: `${item.name} salió del ticket.`,
+    color: 'neutral',
+    icon: 'i-lucide-trash-2'
+  })
+  focusProductSearch()
 }
 
 function applyRecoveredTicket() {
@@ -257,6 +296,7 @@ function applyRecoveredTicket() {
     color: 'success',
     icon: 'i-lucide-shopping-cart'
   })
+  focusProductSearch()
 }
 
 function addManualProduct() {
@@ -293,6 +333,7 @@ function addManualProduct() {
   manualProductForm.unit = 'PIECE'
   manualProductOpen.value = false
   toast.add({ title: 'Producto agregado', description: 'Se agregó como venta sin código al ticket.', color: 'success', icon: 'i-lucide-badge-plus' })
+  focusProductSearch()
 }
 
 function getSaleRequestItems() {
@@ -416,14 +457,16 @@ async function holdCurrentTicket() {
 
           <div class="relative z-30">
             <UInput
+              ref="productSearchInput"
               v-model="search" icon="i-lucide-search" size="lg" color="neutral" variant="outline"
               placeholder="Escanea o escribe un producto…" aria-label="Escanear o buscar productos" autocomplete="off" class="w-full"
               :ui="{ base: 'rounded-xl bg-white' }"
               :loading="scanningProduct"
               @keydown.enter.prevent="addScannedProduct"
+              @blur="keepScannerFocus"
             >
               <template v-if="search" #trailing>
-                <UButton icon="i-lucide-x" color="neutral" variant="link" size="sm" aria-label="Limpiar búsqueda" @click="search = ''" />
+                <UButton icon="i-lucide-x" color="neutral" variant="link" size="sm" aria-label="Limpiar búsqueda" @click="clearProductSearch" />
               </template>
             </UInput>
 
@@ -494,18 +537,19 @@ async function holdCurrentTicket() {
             </div>
             <div v-else>
               <div class="w-full overflow-hidden">
-                <div class="grid grid-cols-[4.25rem_minmax(0,1fr)_4.5rem_6.25rem_5.5rem] gap-1.5 border-b border-[#d7ddd8] bg-[#f0f5f2] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#5d6a62] 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem]">
+                <div class="grid grid-cols-[3.75rem_minmax(0,1fr)_4.25rem_6rem_5.25rem_2rem] gap-1.5 border-b border-[#d7ddd8] bg-[#f0f5f2] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#5d6a62] 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem_2.25rem]">
                   <span>Código</span>
                   <span>Producto</span>
                   <span class="text-right">Precio</span>
                   <span class="text-center">Cant./$</span>
                   <span class="text-right">Importe</span>
+                  <span class="sr-only">Quitar</span>
                 </div>
                 <ul class="max-h-[calc(100vh-12.5rem)] divide-y divide-[#e7ece8] overflow-y-auto" aria-label="Productos en la venta">
                   <li
                     v-for="item in cart"
                     :key="item.id"
-                    class="grid grid-cols-[4.25rem_minmax(0,1fr)_4.5rem_6.25rem_5.5rem] items-center gap-1.5 px-2.5 py-1.5 text-xs odd:bg-white even:bg-[#f8fbf9] 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem]"
+                    class="grid grid-cols-[3.75rem_minmax(0,1fr)_4.25rem_6rem_5.25rem_2rem] items-center gap-1.5 px-2.5 py-1.5 text-xs odd:bg-white even:bg-[#f8fbf9] 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem_2.25rem]"
                   >
                     <span class="truncate text-xs text-[#617068]">{{ item.sku }}</span>
                     <span class="min-w-0">
@@ -516,8 +560,7 @@ async function holdCurrentTicket() {
                     </span>
                     <span class="text-right text-[11px] font-semibold text-[#536057]">{{ currency.format(item.price) }}</span>
                     <span class="flex items-center justify-center gap-0.5">
-                      <UButton v-if="item.isManual" icon="i-lucide-trash-2" color="error" variant="ghost" size="xs" :aria-label="`Quitar ${item.name}`" @click="setQuantity(item, 0)" />
-                      <UButton v-else-if="item.unit === 'PIECE'" icon="i-lucide-minus" color="neutral" variant="ghost" size="xs" :aria-label="`Quitar cantidad de ${item.name}`" @click="setQuantity(item, item.quantity - getQuantityStep(item))" />
+                      <UButton v-if="item.unit === 'PIECE' && !item.isManual" icon="i-lucide-minus" color="neutral" variant="ghost" size="xs" :aria-label="`Quitar cantidad de ${item.name}`" @click="setQuantity(item, item.quantity - getQuantityStep(item))" />
                       <UBadge v-if="item.isManual" label="Manual" color="neutral" variant="soft" size="sm" />
                       <UInput
                         v-else
@@ -541,6 +584,16 @@ async function holdCurrentTicket() {
                       <span class="block text-xs font-bold text-emerald-700">{{ currency.format(item.price * item.quantity) }}</span>
                       <span v-if="item.unit === 'KILOGRAM' && item.quantity > 0" class="block text-[10px] leading-tight text-[#7d8781]">{{ item.quantity }} kg</span>
                     </span>
+                    <UTooltip text="Quitar producto">
+                      <UButton
+                        icon="i-lucide-trash-2"
+                        color="error"
+                        variant="ghost"
+                        size="xs"
+                        :aria-label="`Quitar ${item.name} del ticket`"
+                        @click="removeCartItem(item)"
+                      />
+                    </UTooltip>
                   </li>
                 </ul>
               </div>
@@ -564,13 +617,13 @@ async function holdCurrentTicket() {
                   </p>
                 </div>
                 <div class="mt-2 grid grid-cols-2 gap-2 border-t border-[#d9e5dd] pt-2">
-                  <div class="flex items-center justify-between gap-2 rounded-lg border border-sky-100 bg-sky-50/90 px-2.5 py-2">
-                    <span class="text-xs font-semibold text-sky-800">Subtotal</span>
-                    <span class="text-base font-black text-sky-900 tabular-nums">{{ currency.format(total) }}</span>
+                  <div class="min-w-0 rounded-lg border border-sky-100 bg-sky-50/90 px-2.5 py-2">
+                    <span class="block text-[11px] font-semibold uppercase tracking-wide text-sky-800">Subtotal</span>
+                    <span class="mt-0.5 block max-w-full truncate text-right font-mono text-[clamp(.95rem,2.2vw,1.125rem)] font-black leading-tight text-sky-900 tabular-nums">{{ currency.format(total) }}</span>
                   </div>
-                  <div class="flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2" :class="cashReceivedIsInsufficient ? 'border-amber-200 bg-amber-50/95' : 'border-orange-200 bg-orange-50/95'">
-                    <span class="text-xs font-semibold" :class="cashReceivedIsInsufficient ? 'text-amber-800' : 'text-orange-800'">Cambio</span>
-                    <span class="text-base font-black tabular-nums" :class="cashReceivedIsInsufficient ? 'text-amber-800' : 'text-orange-700'">{{ currency.format(changeDue) }}</span>
+                  <div class="min-w-0 rounded-lg border px-2.5 py-2" :class="cashReceivedIsInsufficient ? 'border-amber-200 bg-amber-50/95' : 'border-orange-200 bg-orange-50/95'">
+                    <span class="block text-[11px] font-semibold uppercase tracking-wide" :class="cashReceivedIsInsufficient ? 'text-amber-800' : 'text-orange-800'">Cambio</span>
+                    <span class="mt-0.5 block max-w-full truncate text-right font-mono text-[clamp(.95rem,2.2vw,1.125rem)] font-black leading-tight tabular-nums" :class="cashReceivedIsInsufficient ? 'text-amber-800' : 'text-orange-700'">{{ currency.format(changeDue) }}</span>
                   </div>
                 </div>
                 <div v-if="paymentMethod === 'CASH' && paymentTotal !== total" class="mt-2 flex items-center justify-between">

@@ -74,8 +74,8 @@ async function closeCashRegister() {
       <UAlert v-else-if="summaryError" class="mb-5" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos calcular la caja">
         <template #actions><UButton label="Reintentar" color="error" variant="soft" @click="refreshAll" /></template>
       </UAlert>
-      <UAlert v-else-if="!cashSession || !summary" class="mb-5" color="warning" variant="soft" icon="i-lucide-cash" title="No hay caja abierta" description="Abre caja desde el punto de venta para comenzar un turno.">
-        <template #actions><UButton to="/dashboard/ventas" label="Ir a punto de venta" color="warning" variant="soft" /></template>
+      <UAlert v-else-if="!cashSession || !summary" class="mb-5" color="warning" variant="soft" icon="i-lucide-cash" title="No hay caja abierta" description="Inicia una nueva caja para comenzar el siguiente turno.">
+        <template #actions><UButton to="/dashboard/caja/inicio" label="Ir a inicio del día" color="warning" variant="soft" /></template>
       </UAlert>
 
       <div v-else class="grid items-start gap-5 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,.75fr)]">
