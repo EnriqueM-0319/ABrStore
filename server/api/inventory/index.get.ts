@@ -30,26 +30,35 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event)
   const search = typeof query.search === 'string' ? query.search.trim().slice(0, 80) : ''
+  const lowStockOnly = query.lowStock === 'true'
   const page = getPositiveInteger(query.page, 1)
   const requestedLimit = getPositiveInteger(query.limit, DEFAULT_LIMIT)
   const limit = Math.min(requestedLimit, MAX_LIMIT)
   const skip = (page - 1) * limit
 
-  const where = search
-    ? {
-        OR: [
-          { name: { contains: search, mode: 'insensitive' as const } },
-          { sku: { contains: search, mode: 'insensitive' as const } },
-          { description: { contains: search, mode: 'insensitive' as const } }
-        ]
-      }
-    : undefined
-  const sqlWhere = search
-    ? Prisma.sql`WHERE "name" ILIKE ${`%${search}%`} OR "sku" ILIKE ${`%${search}%`} OR "description" ILIKE ${`%${search}%`}`
+  const where = {
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' as const } },
+            { sku: { contains: search, mode: 'insensitive' as const } },
+            { description: { contains: search, mode: 'insensitive' as const } }
+          ]
+        }
+      : {}),
+    ...(lowStockOnly ? { active: true, stock: { lte: new Prisma.Decimal(5) } } : {})
+  }
+  const productWhere = Object.keys(where).length ? where : undefined
+  const sqlConditions = [
+    ...(search ? [Prisma.sql`("name" ILIKE ${`%${search}%`} OR "sku" ILIKE ${`%${search}%`} OR "description" ILIKE ${`%${search}%`})`] : []),
+    ...(lowStockOnly ? [Prisma.sql`active = true AND stock <= 5`] : [])
+  ]
+  const sqlWhere = sqlConditions.length
+    ? Prisma.sql`WHERE ${Prisma.join(sqlConditions, ' AND ')}`
     : Prisma.empty
 
   const [total, products] = await prisma.$transaction([
-    prisma.product.count({ where }),
+    prisma.product.count({ where: productWhere }),
     prisma.$queryRaw<ProductRow[]>`
       SELECT id, sku, name, description, "costPrice", "profitMargin", price, unit, stock, active
       FROM "Product"

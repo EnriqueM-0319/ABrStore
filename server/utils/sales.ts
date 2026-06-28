@@ -4,6 +4,7 @@ type SaleWithItems = Prisma.SaleGetPayload<{
   include: {
     seller: { select: { id: true; fullName: true; email: true } }
     canceledBy?: { select: { id: true; fullName: true; email: true } }
+    creditPaidBy?: { select: { id: true; fullName: true; email: true } }
     cashSession?: { select: { id: true; openedAt: true; status: true } }
     items: true
   }
@@ -24,6 +25,11 @@ export function serializeSale(sale: SaleWithItems, currentCashSessionId?: string
     canceledAt: sale.canceledAt?.toISOString() ?? null,
     cancelReason: sale.cancelReason,
     canceledBy: sale.canceledBy ?? null,
+    creditPaidAt: sale.creditPaidAt?.toISOString() ?? null,
+    creditPaidBy: sale.creditPaidBy ?? null,
+    creditPaymentMethod: sale.creditPaymentMethod ?? null,
+    creditCustomerName: sale.creditCustomerName,
+    creditNote: sale.creditNote,
     canCancel,
     createdAt: sale.createdAt.toISOString(),
     seller: sale.seller,

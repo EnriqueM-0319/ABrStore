@@ -49,6 +49,10 @@ export function useHeldTickets(cashSessionId: MaybeRefOrGetter<string | null | u
     return toValue(cashSessionId) || null
   }
 
+  function getCachedTicketsAge() {
+    return Date.now() - lastFetchedAt.value
+  }
+
   function setTickets(nextTickets: HeldTicket[]) {
     const sessionId = getSessionId()
     tickets.value = nextTickets
@@ -133,7 +137,12 @@ export function useHeldTickets(cashSessionId: MaybeRefOrGetter<string | null | u
       lastFetchedAt.value = cached?.cachedAt ?? 0
     }
 
-    return refresh({ force: !tickets.value.length || Date.now() - lastFetchedAt.value >= cacheTtl })
+    if (tickets.value.length && getCachedTicketsAge() < cacheTtl) {
+      void refresh({ force: true })
+      return Promise.resolve(tickets.value)
+    }
+
+    return refresh({ force: true })
   }
 
   return {

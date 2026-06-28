@@ -6,12 +6,19 @@ const route = useRoute()
 const { user, clearUser } = useAuth()
 const items = [
   { label: 'Punto de venta', icon: 'i-lucide-monitor-up', to: '/dashboard/ventas', enabled: true },
-  { label: 'Tickets guardados', icon: 'i-lucide-bookmark', to: '/dashboard/tickets-guardados', enabled: true },
-  { label: 'Historial de ventas', icon: 'i-lucide-receipt-text', to: '/dashboard/historial', enabled: true }
+  { label: 'Tickets guardados', icon: 'i-lucide-bookmark', to: '/dashboard/tickets-guardados', enabled: true }
+]
+const salesItems = [
+  { label: 'Historial de ventas', icon: 'i-lucide-receipt-text', to: '/dashboard/historial' },
+  { label: 'Cuentas por cobrar', icon: 'i-lucide-hand-coins', to: '/dashboard/cuentas-por-cobrar' }
 ]
 const adminItems = [
   { label: 'Usuarios', icon: 'i-lucide-users', to: '/dashboard/usuarios', enabled: true },
   { label: 'Registrar usuario', icon: 'i-lucide-user-plus', to: '/registro', enabled: true }
+]
+const reportItems = [
+  { label: 'Reporte de ventas', icon: 'i-lucide-chart-column', to: '/dashboard/reportes/ventas' },
+  { label: 'Reporte de producto', icon: 'i-lucide-chart-bar-big', to: '/dashboard/reportes/productos' }
 ]
 const inventoryItems = [
   { label: 'Productos', icon: 'i-lucide-package', to: '/dashboard/productos' },
@@ -24,12 +31,16 @@ const cashItems = [
   { label: 'Cierre de caja', icon: 'i-lucide-calculator', to: '/dashboard/caja/cierre' }
 ]
 const inventoryOpen = ref(['/dashboard/inventario', '/dashboard/productos'].includes(route.path) || route.path.startsWith('/dashboard/salidas'))
+const salesOpen = ref(['/dashboard/historial', '/dashboard/cuentas-por-cobrar'].includes(route.path))
 const cashOpen = ref(route.path.startsWith('/dashboard/caja'))
+const reportsOpen = ref(route.path.startsWith('/dashboard/reportes'))
 const canManageUsers = computed(() => ['SUPERADMIN', 'ADMIN'].includes(user.value?.role || ''))
 
 watch(() => route.path, (path) => {
   if (['/dashboard/inventario', '/dashboard/productos'].includes(path) || path.startsWith('/dashboard/salidas')) inventoryOpen.value = true
+  if (['/dashboard/historial', '/dashboard/cuentas-por-cobrar'].includes(path)) salesOpen.value = true
   if (path.startsWith('/dashboard/caja')) cashOpen.value = true
+  if (path.startsWith('/dashboard/reportes')) reportsOpen.value = true
 })
 
 const initials = computed(() => user.value?.fullName.split(' ').filter(Boolean).map(part => part[0]).slice(0, 2).join('').toUpperCase() || 'U')
@@ -63,6 +74,32 @@ async function logout() {
           <UBadge v-if="!item.enabled" label="Pronto" color="neutral" variant="soft" size="sm" class="ml-auto" />
         </NuxtLink>
       </template>
+      <div>
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
+          :class="['/dashboard/historial', '/dashboard/cuentas-por-cobrar'].includes(route.path) ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+          :aria-expanded="salesOpen"
+          aria-controls="sales-submenu"
+          @click="salesOpen = !salesOpen"
+        >
+          <UIcon name="i-lucide-chart-no-axes-combined" class="size-5 shrink-0" aria-hidden="true" />
+          <span>Ventas</span>
+          <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 transition-transform" :class="salesOpen ? 'rotate-180' : ''" aria-hidden="true" />
+        </button>
+        <div v-if="salesOpen" id="sales-submenu" class="mt-1 space-y-1 pl-4">
+          <NuxtLink
+            v-for="child in salesItems" :key="child.to" :to="child.to"
+            class="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium transition"
+            :class="route.path === child.to ? 'bg-[#f0f6f2] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+            :aria-current="route.path === child.to ? 'page' : undefined"
+            @click="$emit('navigate')"
+          >
+            <UIcon :name="child.icon" class="size-4 shrink-0" aria-hidden="true" />
+            <span>{{ child.label }}</span>
+          </NuxtLink>
+        </div>
+      </div>
       <div>
         <button
           type="button"
@@ -127,6 +164,32 @@ async function logout() {
           <UIcon :name="item.icon" class="size-5 shrink-0" aria-hidden="true" />
           <span>{{ item.label }}</span>
         </NuxtLink>
+        <div class="mt-1">
+          <button
+            type="button"
+            class="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-medium transition"
+            :class="route.path.startsWith('/dashboard/reportes') ? 'bg-[#eaf2ed] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+            :aria-expanded="reportsOpen"
+            aria-controls="reports-submenu"
+            @click="reportsOpen = !reportsOpen"
+          >
+            <UIcon name="i-lucide-file-chart-column" class="size-5 shrink-0" aria-hidden="true" />
+            <span>Reportes</span>
+            <UIcon name="i-lucide-chevron-down" class="ml-auto size-4 transition-transform" :class="reportsOpen ? 'rotate-180' : ''" aria-hidden="true" />
+          </button>
+          <div v-if="reportsOpen" id="reports-submenu" class="mt-1 space-y-1 pl-4">
+            <NuxtLink
+              v-for="child in reportItems" :key="child.to" :to="child.to"
+              class="flex min-h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium transition"
+              :class="route.path === child.to ? 'bg-[#f0f6f2] text-[#1f4937]' : 'text-[#69736d] hover:bg-[#f5f6f4]'"
+              :aria-current="route.path === child.to ? 'page' : undefined"
+              @click="$emit('navigate')"
+            >
+              <UIcon :name="child.icon" class="size-4 shrink-0" aria-hidden="true" />
+              <span>{{ child.label }}</span>
+            </NuxtLink>
+          </div>
+        </div>
       </div>
     </nav>
     <div class="border-t border-[#edf0ed] pt-4">

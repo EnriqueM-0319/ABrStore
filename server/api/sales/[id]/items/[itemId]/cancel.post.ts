@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { requireRole } from '../../../../../utils/auth'
 import { operationalRoles } from '../../../../../utils/users'
-import { roundCashPaymentTotal } from '../../../../../utils/cash-rounding'
+import { roundPayableTotal, shouldRoundPaymentMethod } from '../../../../../utils/cash-rounding'
 import { serializeSale } from '../../../../../utils/sales'
 import prisma from '../../../../../../lib/prisma'
 
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
 
     const total = activeItemsAfterCancel.reduce((sum, item) => sum.add(item.lineTotal), new Prisma.Decimal(0)).toDecimalPlaces(2)
     const itemCount = activeItemsAfterCancel.reduce((sum, item) => sum.add(item.quantity), new Prisma.Decimal(0)).toDecimalPlaces(3)
-    const paymentTotal = saleToUpdate.paymentMethod === 'CASH' ? roundCashPaymentTotal(total) : total
+    const paymentTotal = shouldRoundPaymentMethod(saleToUpdate.paymentMethod) ? roundPayableTotal(total) : total
     const changeDue = saleToUpdate.cashReceived ? saleToUpdate.cashReceived.sub(paymentTotal).toDecimalPlaces(2) : null
 
     return tx.sale.update({

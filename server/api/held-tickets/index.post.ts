@@ -80,9 +80,20 @@ export default defineEventHandler(async (event) => {
       if (product.unit === 'PIECE' && !Number.isInteger(item.quantity)) throw createError({ statusCode: 400, message: `${product.name} solo se puede vender por pieza.` })
 
       const quantity = new Prisma.Decimal(product.unit === 'KILOGRAM' ? item.quantity.toFixed(3) : item.quantity.toFixed(0))
+      if (product.stock.lessThan(quantity)) throw createError({ statusCode: 409, message: `${product.name} no tiene existencias suficientes para apartar.` })
+
       const lineTotal = product.price.mul(quantity).toDecimalPlaces(2)
       return { product, quantity, lineTotal, manual: null }
     })
+
+    for (const item of ticketItems) {
+      if (!item.product) continue
+      const updated = await tx.product.updateMany({
+        where: { id: item.product.id, active: true, stock: { gte: item.quantity } },
+        data: { stock: { decrement: item.quantity } }
+      })
+      if (updated.count !== 1) throw createError({ statusCode: 409, message: `${item.product.name} ya no tiene stock suficiente para apartar.` })
+    }
 
     const total = ticketItems.reduce((sum, item) => sum.add(item.lineTotal), new Prisma.Decimal(0)).toDecimalPlaces(2)
     const itemCount = ticketItems.reduce((sum, item) => sum.add(item.quantity), new Prisma.Decimal(0)).toDecimalPlaces(3)

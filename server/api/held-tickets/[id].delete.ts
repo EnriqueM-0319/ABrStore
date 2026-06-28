@@ -7,17 +7,30 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, message: 'Ticket inválido.' })
 
-  const cashSession = await prisma.cashRegisterSession.findFirst({
-    where: { status: 'OPEN' },
-    select: { id: true }
-  })
-  if (!cashSession) throw createError({ statusCode: 409, message: 'No hay caja abierta.' })
+  await prisma.$transaction(async (tx) => {
+    const cashSession = await tx.cashRegisterSession.findFirst({
+      where: { status: 'OPEN' },
+      select: { id: true }
+    })
+    if (!cashSession) throw createError({ statusCode: 409, message: 'No hay caja abierta.' })
 
-  const deleted = await prisma.heldTicket.deleteMany({
-    where: { id, cashSessionId: cashSession.id }
-  })
+    const ticket = await tx.heldTicket.findFirst({
+      where: { id, cashSessionId: cashSession.id },
+      include: { items: { select: { productId: true, quantity: true } } }
+    })
 
-  if (deleted.count !== 1) throw createError({ statusCode: 404, message: 'No encontramos el ticket guardado.' })
+    if (!ticket) throw createError({ statusCode: 404, message: 'No encontramos el ticket guardado.' })
+
+    for (const item of ticket.items) {
+      if (!item.productId) continue
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: item.quantity } }
+      })
+    }
+
+    await tx.heldTicket.delete({ where: { id: ticket.id } })
+  })
 
   return { ok: true }
 })

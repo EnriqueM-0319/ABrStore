@@ -24,6 +24,16 @@ export default defineEventHandler(async (event) => {
 
     if (!openSession) throw createError({ statusCode: 409, message: 'No hay una caja abierta para cerrar.' })
 
+    const pendingHeldTickets = await tx.heldTicket.count({
+      where: { cashSessionId: openSession.id }
+    })
+    if (pendingHeldTickets > 0) {
+      throw createError({
+        statusCode: 409,
+        message: 'Hay tickets guardados con producto apartado. Cóbrelos o elimínelos antes de cerrar caja.'
+      })
+    }
+
     const summary = await getCashRegisterSummary(tx, openSession.id, openSession.openingAmount)
     const expectedAmount = new Prisma.Decimal(summary.expectedAmount.toFixed(2))
     const countedAmount = new Prisma.Decimal(closingAmount.toFixed(2))

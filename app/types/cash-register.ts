@@ -28,6 +28,7 @@ export type CashRegisterSummary = {
   cashSalesCount: number
   cardSalesTotal: number
   transferSalesTotal: number
+  creditSalesTotal: number
   nonCashSalesTotal: number
   cashInTotal: number
   adjustmentTotal: number

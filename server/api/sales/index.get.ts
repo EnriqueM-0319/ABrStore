@@ -20,17 +20,31 @@ export default defineEventHandler(async (event) => {
   const requestedLimit = getPositiveInteger(query.limit, DEFAULT_LIMIT)
   const limit = Math.min(requestedLimit, MAX_LIMIT)
   const skip = (page - 1) * limit
+  const startDate = typeof query.startDate === 'string' && query.startDate ? new Date(`${query.startDate}T00:00:00.000`) : null
+  const endDate = typeof query.endDate === 'string' && query.endDate ? new Date(`${query.endDate}T23:59:59.999`) : null
+  const folio = Number(query.folio)
+  const createdAt = {
+    ...(startDate && !Number.isNaN(startDate.getTime()) ? { gte: startDate } : {}),
+    ...(endDate && !Number.isNaN(endDate.getTime()) ? { lte: endDate } : {})
+  }
+  const where = {
+    ...(Object.keys(createdAt).length ? { createdAt } : {}),
+    ...(Number.isInteger(folio) && folio > 0 ? { folio } : {})
+  }
+  const saleWhere = Object.keys(where).length ? where : undefined
 
   const [currentCashSession, total, sales] = await prisma.$transaction([
     prisma.cashRegisterSession.findFirst({
       where: { status: 'OPEN' },
       select: { id: true }
     }),
-    prisma.sale.count(),
+    prisma.sale.count({ where: saleWhere }),
     prisma.sale.findMany({
+      where: saleWhere,
       include: {
         seller: { select: { id: true, fullName: true, email: true } },
         canceledBy: { select: { id: true, fullName: true, email: true } },
+        creditPaidBy: { select: { id: true, fullName: true, email: true } },
         cashSession: { select: { id: true, openedAt: true, status: true } },
         items: { orderBy: { id: 'asc' } }
       },

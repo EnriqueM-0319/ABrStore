@@ -10,12 +10,15 @@ const productToDelete = ref<Product | null>(null)
 const deleteModalOpen = ref(false)
 const deleting = ref(false)
 const deleteError = ref('')
+const selectedProductIds = ref<string[]>([])
+const exporting = ref(false)
 const toast = useToast()
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 const limitOptions = [{ label: '10 por página', value: 10 }, { label: '20 por página', value: 20 }, { label: '30 por página', value: 30 }, { label: '50 por página', value: 50 }]
 const {
   search,
   debouncedSearch,
+  lowStockOnly,
   products,
   page,
   limit,
@@ -31,6 +34,10 @@ const {
   updateProductInPage,
   removeProductFromPage
 } = useInventory()
+
+const selectedProductsCount = computed(() => selectedProductIds.value.length)
+const currentPageProductIds = computed(() => products.value.map(product => product.id))
+const allCurrentPageSelected = computed(() => currentPageProductIds.value.length > 0 && currentPageProductIds.value.every(id => selectedProductIds.value.includes(id)))
 
 function openCreateModal() {
   selectedProduct.value = null
@@ -51,6 +58,56 @@ function askDeleteProduct(product: Product) {
   productToDelete.value = product
   deleteError.value = ''
   deleteModalOpen.value = true
+}
+
+function toggleProductSelection(productId: string, checked: boolean) {
+  if (checked) {
+    if (!selectedProductIds.value.includes(productId)) selectedProductIds.value = [...selectedProductIds.value, productId]
+    return
+  }
+
+  selectedProductIds.value = selectedProductIds.value.filter(id => id !== productId)
+}
+
+function toggleCurrentPageSelection(checked: boolean) {
+  if (checked) {
+    selectedProductIds.value = [...new Set([...selectedProductIds.value, ...currentPageProductIds.value])]
+    return
+  }
+
+  selectedProductIds.value = selectedProductIds.value.filter(id => !currentPageProductIds.value.includes(id))
+}
+
+async function exportProducts(scope: 'all' | 'low-stock' | 'selected') {
+  if (scope === 'selected' && !selectedProductIds.value.length) {
+    toast.add({ title: 'Selecciona productos', description: 'Marca al menos un producto para exportar.', color: 'warning', icon: 'i-lucide-circle-alert' })
+    return
+  }
+
+  exporting.value = true
+
+  try {
+    const params = new URLSearchParams({ scope })
+    if (scope === 'selected') params.set('ids', selectedProductIds.value.join(','))
+    const response = await fetch(`/api/products/export?${params.toString()}`, { credentials: 'same-origin' })
+    if (!response.ok) throw new Error(await response.text())
+
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `productos-${scope}-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.append(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+
+    toast.add({ title: 'Exportación lista', description: 'Se descargó el archivo CSV de productos.', color: 'success', icon: 'i-lucide-download' })
+  } catch (error: unknown) {
+    toast.add({ title: 'No se pudo exportar', description: getErrorMessage(error, 'Intenta nuevamente.'), color: 'error', icon: 'i-lucide-circle-alert' })
+  } finally {
+    exporting.value = false
+  }
 }
 
 async function permanentlyDeleteProduct() {
@@ -90,6 +147,48 @@ async function permanentlyDeleteProduct() {
           </div>
         </div>
 
+        <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-[#e1e6e2] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold text-[#26322c]">Filtros de inventario</p>
+            <p class="mt-1 text-xs text-[#7d8781]">Identifica rápido qué productos necesitan reposición.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            <USwitch
+              v-model="lowStockOnly"
+              label="Mostrar solo existencias bajas"
+              color="warning"
+              aria-label="Filtrar productos con existencias bajas"
+            />
+            <UBadge
+              :label="lowStockOnly ? '≤ 5 activos' : 'Filtro apagado'"
+              :color="lowStockOnly ? 'warning' : 'neutral'"
+              variant="soft"
+            />
+          </div>
+        </div>
+
+        <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-[#e1e6e2] bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <label class="inline-flex items-center gap-2 text-sm font-medium text-[#26322c]">
+              <input
+                type="checkbox"
+                class="size-4 rounded border-[#cdd6d0] text-emerald-700 focus:ring-emerald-600"
+                :checked="allCurrentPageSelected"
+                :disabled="!products.length"
+                aria-label="Seleccionar productos visibles"
+                @change="toggleCurrentPageSelection(($event.target as HTMLInputElement).checked)"
+              >
+              Seleccionar visibles
+            </label>
+            <span class="text-sm text-[#7d8781]">{{ selectedProductsCount }} seleccionados</span>
+          </div>
+          <div class="grid gap-2 sm:grid-cols-3">
+            <UButton label="Exportar seleccionados" icon="i-lucide-list-checks" color="neutral" variant="soft" :loading="exporting" :disabled="!selectedProductsCount" @click="exportProducts('selected')" />
+            <UButton label="Exportar bajo stock" icon="i-lucide-triangle-alert" color="warning" variant="soft" :loading="exporting" @click="exportProducts('low-stock')" />
+            <UButton label="Exportar todos" icon="i-lucide-download" color="primary" variant="soft" :loading="exporting" @click="exportProducts('all')" />
+          </div>
+        </div>
+
         <UAlert v-if="inventoryError" class="mb-3" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar productos" :description="inventoryError">
           <template #actions>
             <UButton label="Reintentar" color="error" variant="soft" size="sm" @click="loadInventory()" />
@@ -114,6 +213,13 @@ async function permanentlyDeleteProduct() {
             <li v-for="product in products" :key="product.id" class="p-4 sm:px-5">
               <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="flex min-w-0 items-start gap-3">
+                  <input
+                    type="checkbox"
+                    class="mt-3 size-4 shrink-0 rounded border-[#cdd6d0] text-emerald-700 focus:ring-emerald-600"
+                    :checked="selectedProductIds.includes(product.id)"
+                    :aria-label="`Seleccionar ${product.name}`"
+                    @change="toggleProductSelection(product.id, ($event.target as HTMLInputElement).checked)"
+                  >
                   <span class="grid size-10 shrink-0 place-items-center rounded-xl" :class="product.active ? 'bg-[#eaf2ed] text-[#286047]' : 'bg-stone-100 text-stone-400'">
                     <UIcon name="i-lucide-package" class="size-5" aria-hidden="true" />
                   </span>
@@ -121,6 +227,7 @@ async function permanentlyDeleteProduct() {
                     <div class="flex flex-wrap items-center gap-2">
                       <h3 class="truncate text-sm font-semibold">{{ product.name }}</h3>
                       <UBadge :label="product.active ? 'Activo' : 'Inactivo'" :color="product.active ? 'success' : 'neutral'" variant="soft" size="sm" />
+                      <UBadge v-if="product.active && product.stock <= 5" label="Bajo stock" color="warning" variant="soft" size="sm" />
                       <UBadge :label="product.sku" color="neutral" variant="soft" size="sm" />
                     </div>
                     <p class="mt-1 line-clamp-1 text-xs text-[#7d8781]">{{ product.description || 'Sin descripción' }}</p>

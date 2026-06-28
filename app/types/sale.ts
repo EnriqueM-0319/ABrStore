@@ -1,6 +1,6 @@
 import type { Product } from './product'
 
-export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER'
+export type PaymentMethod = 'CASH' | 'CARD' | 'TRANSFER' | 'CREDIT'
 export type CashRegisterStatus = 'OPEN' | 'CLOSED'
 
 export type SaleTicketItem = {
@@ -33,6 +33,15 @@ export type SaleTicket = {
     fullName: string
     email: string
   } | null
+  creditPaidAt: string | null
+  creditPaidBy: {
+    id: string
+    fullName: string
+    email: string
+  } | null
+  creditPaymentMethod: PaymentMethod | null
+  creditCustomerName: string | null
+  creditNote: string | null
   canCancel: boolean
   createdAt: string
   seller: {

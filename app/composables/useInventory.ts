@@ -6,6 +6,7 @@ const DEFAULT_LIMIT = 10
 export function useInventory() {
   const search = ref('')
   const debouncedSearch = ref('')
+  const lowStockOnly = ref(false)
   const products = ref<Product[]>([])
   const page = ref(DEFAULT_PAGE)
   const limit = ref(DEFAULT_LIMIT)
@@ -25,7 +26,7 @@ export function useInventory() {
   const lowStock = computed(() => products.value.filter(product => product.active && product.stock <= 5).length)
   const pageStart = computed(() => total.value ? (page.value - 1) * limit.value + 1 : 0)
   const pageEnd = computed(() => Math.min(page.value * limit.value, total.value))
-  const cacheKey = computed(() => `abr_inventory_${page.value}_${limit.value}_${debouncedSearch.value || 'all'}`)
+  const cacheKey = computed(() => `abr_inventory_${page.value}_${limit.value}_${debouncedSearch.value || 'all'}_${lowStockOnly.value ? 'low-stock' : 'all-stock'}`)
 
   function emptyPage() {
     products.value = []
@@ -81,6 +82,7 @@ export function useInventory() {
       const response = await $fetch<InventoryPaginatedResponse>('/api/inventory', {
         query: {
           search: debouncedSearch.value || undefined,
+          lowStock: lowStockOnly.value ? 'true' : undefined,
           page: page.value,
           limit: limit.value
         }
@@ -146,6 +148,10 @@ export function useInventory() {
     if (page.value === DEFAULT_PAGE) loadInventoryWithCache()
     else page.value = DEFAULT_PAGE
   })
+  watch(lowStockOnly, () => {
+    if (page.value === DEFAULT_PAGE) loadInventoryWithCache()
+    else page.value = DEFAULT_PAGE
+  })
 
   onMounted(loadInventoryWithCache)
   onBeforeUnmount(() => clearTimeout(searchTimer))
@@ -153,6 +159,7 @@ export function useInventory() {
   return {
     search,
     debouncedSearch,
+    lowStockOnly,
     products,
     page,
     limit,

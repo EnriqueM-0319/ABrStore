@@ -46,6 +46,7 @@ enum PaymentMethod {
   CASH
   CARD
   TRANSFER
+  CREDIT
 }
 
 model User {
@@ -59,6 +60,7 @@ model User {
   active       Boolean @default(true)
   sales        Sale[]
   canceledSales Sale[] @relation("SaleCanceledBy")
+  paidCreditSales Sale[] @relation("SaleCreditPaidBy")
   heldTickets  HeldTicket[]
   stockExits   StockExit[]
   openedCashSessions CashRegisterSession[] @relation("CashRegisterOpenedBy")
@@ -126,6 +128,12 @@ model Sale {
   canceledById String?
   canceledBy User? @relation("SaleCanceledBy", fields: [canceledById], references: [id])
   cancelReason String?
+  creditPaidAt DateTime?
+  creditPaidById String?
+  creditPaidBy User? @relation("SaleCreditPaidBy", fields: [creditPaidById], references: [id])
+  creditPaymentMethod PaymentMethod?
+  creditCustomerName String?
+  creditNote String?
   items     SaleItem[]
   createdAt DateTime   @default(now())
 
@@ -135,6 +143,8 @@ model Sale {
   @@index([canceledById, canceledAt])
   @@index([cashSessionId, createdAt])
   @@index([paymentMethod, createdAt])
+  @@index([paymentMethod, creditPaidAt])
+  @@index([creditPaidById, creditPaidAt])
 }
 
 model CashRegisterSession {

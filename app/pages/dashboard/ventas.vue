@@ -12,6 +12,8 @@ const cart = ref<CartItem[]>([])
 const quantityDrafts = ref<Record<string, string>>({})
 const paymentMethod = ref<PaymentMethod>('CASH')
 const cashReceived = ref('')
+const creditCustomerName = ref('')
+const creditNote = ref('')
 const checkoutLoading = ref(false)
 const holdingTicket = ref(false)
 const scanningProduct = ref(false)
@@ -70,10 +72,11 @@ watch([manualProductOpen, ticketOpen], ([manualOpen, saleTicketOpen]) => {
 const itemCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0))
 const total = computed(() => cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0))
 const hasChargeableCart = computed(() => cart.value.length > 0 && cart.value.every(item => item.quantity > 0) && total.value > 0)
-const paymentTotal = computed(() => paymentMethod.value === 'CASH' ? roundCashPaymentTotal(total.value) : total.value)
+const paymentTotal = computed(() => shouldRoundPaymentMethod(paymentMethod.value) ? roundPayableTotal(total.value) : total.value)
 const cashReceivedAmount = computed(() => Number(cashReceived.value))
 const changeDue = computed(() => paymentMethod.value === 'CASH' && Number.isFinite(cashReceivedAmount.value) ? Math.max(cashReceivedAmount.value - paymentTotal.value, 0) : 0)
 const cashReceivedIsInsufficient = computed(() => paymentMethod.value === 'CASH' && hasChargeableCart.value && (!Number.isFinite(cashReceivedAmount.value) || cashReceivedAmount.value < paymentTotal.value))
+const creditCustomerIsMissing = computed(() => paymentMethod.value === 'CREDIT' && hasChargeableCart.value && creditCustomerName.value.trim().length < 2)
 const isInitialSearchLoading = computed(() => status.value === 'pending' && Boolean(debouncedSearch.value) && !products.value.length)
 const isSearching = computed(() => status.value === 'pending' && Boolean(debouncedSearch.value) && products.value.length > 0)
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
@@ -83,12 +86,14 @@ const checkoutLabel = computed(() => {
   if (cashIsLoading.value) return 'Verificando caja'
   if (cart.value.length && !hasChargeableCart.value) return 'Falta importe o cantidad'
   if (paymentMethod.value === 'CASH' && cashReceivedIsInsufficient.value) return 'Falta efectivo recibido'
+  if (creditCustomerIsMissing.value) return 'Falta nombre de cliente'
   return cashSession.value ? 'Cobrar venta' : 'Iniciar caja para vender'
 })
 const paymentMethodOptions: Array<{ label: string, value: PaymentMethod }> = [
   { label: 'Efectivo', value: 'CASH' },
   { label: 'Tarjeta', value: 'CARD' },
-  { label: 'Transferencia', value: 'TRANSFER' }
+  { label: 'Transferencia', value: 'TRANSFER' },
+  { label: 'Fiado', value: 'CREDIT' }
 ]
 const manualUnitOptions: Array<{ label: string, value: Product['unit'] }> = [
   { label: 'Pieza', value: 'PIECE' },
@@ -355,16 +360,24 @@ function paymentMethodLabel(method: PaymentMethod) {
   return option?.label ?? 'Efectivo'
 }
 
-function roundCashPaymentTotal(value: number) {
+function shouldRoundPaymentMethod(method: PaymentMethod) {
+  return method === 'CASH' || method === 'CARD'
+}
+
+function roundPayableTotal(value: number) {
   const pesos = Math.floor(value)
   const cents = Math.round((value - pesos) * 100)
   if (cents < 50) return pesos
-  if (cents <= 60) return pesos + 0.5
+  if (cents === 50) return pesos + 0.5
   return pesos + 1
 }
 
 watch(paymentMethod, (method) => {
   if (method !== 'CASH') cashReceived.value = ''
+  if (method !== 'CREDIT') {
+    creditCustomerName.value = ''
+    creditNote.value = ''
+  }
 })
 
 async function checkoutSale() {
@@ -380,6 +393,10 @@ async function checkoutSale() {
     checkoutError.value = 'El efectivo recibido debe cubrir el total de la venta.'
     return
   }
+  if (creditCustomerIsMissing.value) {
+    checkoutError.value = 'Indica a quién pertenece la cuenta por cobrar.'
+    return
+  }
 
   checkoutLoading.value = true
   checkoutError.value = ''
@@ -391,6 +408,8 @@ async function checkoutSale() {
       body: {
         paymentMethod: paymentMethod.value,
         cashReceived: paymentMethod.value === 'CASH' ? cashReceivedAmount.value : null,
+        creditCustomerName: paymentMethod.value === 'CREDIT' ? creditCustomerName.value : null,
+        creditNote: paymentMethod.value === 'CREDIT' ? creditNote.value : null,
         items: getSaleRequestItems()
       }
     })
@@ -399,6 +418,8 @@ async function checkoutSale() {
     ticketOpen.value = true
     clearCart()
     cashReceived.value = ''
+    creditCustomerName.value = ''
+    creditNote.value = ''
     await Promise.all([refresh(), refreshCashSession({ force: true }), refreshHeldTickets({ force: true })])
   } catch (error: unknown) {
     checkoutError.value = getErrorMessage(error, 'No pudimos cobrar la venta.')
@@ -611,7 +632,7 @@ async function holdCurrentTicket() {
               <ActionFeedback v-if="heldTicketError" class="mb-3" :message="heldTicketError" type="error" @dismiss="heldTicketError = ''" />
               <div class="rounded-xl border border-[#cdd9d2] bg-[#edf7f0] p-3">
                 <div>
-                  <p class="text-xs font-bold uppercase tracking-[.14em] text-[#456052]">{{ paymentMethod === 'CASH' ? 'Total a cobrar' : 'Total' }}</p>
+                  <p class="text-xs font-bold uppercase tracking-[.14em] text-[#456052]">{{ shouldRoundPaymentMethod(paymentMethod) ? 'Total a cobrar' : 'Total' }}</p>
                   <p class="mt-1 max-w-full break-words text-right font-mono text-[clamp(2rem,3.8vw,3rem)] font-black leading-none tracking-[-.06em] text-[#233071] tabular-nums">
                     {{ currency.format(paymentTotal) }}
                   </p>
@@ -626,7 +647,7 @@ async function holdCurrentTicket() {
                     <span class="mt-0.5 block max-w-full truncate text-right font-mono text-[clamp(.95rem,2.2vw,1.125rem)] font-black leading-tight tabular-nums" :class="cashReceivedIsInsufficient ? 'text-amber-800' : 'text-orange-700'">{{ currency.format(changeDue) }}</span>
                   </div>
                 </div>
-                <div v-if="paymentMethod === 'CASH' && paymentTotal !== total" class="mt-2 flex items-center justify-between">
+                <div v-if="shouldRoundPaymentMethod(paymentMethod) && paymentTotal !== total" class="mt-2 flex items-center justify-between">
                   <p class="text-xs text-[#748078]">Ajuste por redondeo</p>
                   <p class="text-sm font-semibold text-[#536057]">{{ currency.format(paymentTotal - total) }}</p>
                 </div>
@@ -645,6 +666,29 @@ async function holdCurrentTicket() {
                   />
                 </UFormField>
                 <p v-if="cashReceivedIsInsufficient && cart.length" class="mt-2 text-xs text-amber-700">Ingresa al menos {{ currency.format(paymentTotal) }} para cobrar en efectivo.</p>
+              </div>
+              <div v-if="paymentMethod === 'CREDIT'" class="mt-3 space-y-3">
+                <UFormField label="Nombre de cliente" name="creditCustomerName" required>
+                  <UInput
+                    v-model="creditCustomerName"
+                    placeholder="Ej. Juan Pérez"
+                    maxlength="100"
+                    autocomplete="off"
+                    class="w-full"
+                    aria-label="Nombre del cliente de la cuenta por cobrar"
+                  />
+                </UFormField>
+                <UFormField label="Descripción o nota" name="creditNote">
+                  <UTextarea
+                    v-model="creditNote"
+                    :rows="2"
+                    maxlength="180"
+                    placeholder="Ej. Paga el viernes, referencia del pedido…"
+                    class="w-full"
+                    aria-label="Descripción de la cuenta por cobrar"
+                  />
+                </UFormField>
+                <p v-if="creditCustomerIsMissing && cart.length" class="text-xs text-amber-700">Indica a quién pertenece esta cuenta por cobrar.</p>
               </div>
               <div v-if="cart.length" class="mt-3 grid grid-cols-[1fr_auto] gap-2">
                 <UInput v-model="heldTicketNote" placeholder="Nota para guardar…" maxlength="120" class="w-full" aria-label="Nota para guardar ticket en espera" />
@@ -673,7 +717,7 @@ async function holdCurrentTicket() {
                 :icon="cashSession ? 'i-lucide-credit-card' : 'i-lucide-sunrise'"
                 :label="checkoutLabel"
                 class="mt-3 rounded-xl font-black"
-                :disabled="cashIsLoading || (Boolean(cashSession) && (!hasChargeableCart || cashReceivedIsInsufficient))"
+                :disabled="cashIsLoading || (Boolean(cashSession) && (!hasChargeableCart || cashReceivedIsInsufficient || creditCustomerIsMissing))"
                 :loading="checkoutLoading || cashIsLoading"
                 @click="cashSession ? checkoutSale() : navigateTo('/dashboard/caja/inicio')"
               />
@@ -759,10 +803,10 @@ async function holdCurrentTicket() {
                 <p class="text-xs text-[#89928d]">{{ ticket.seller.email }}</p>
               </div>
               <p class="mt-3 text-xs text-[#7d8781]">Forma de pago: {{ paymentMethodLabel(ticket.paymentMethod) }}</p>
-              <div v-if="ticket.paymentMethod === 'CASH'" class="mt-3 grid gap-1 rounded-xl bg-[#f7faf8] p-3 text-xs text-[#68746d]">
+              <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod)" class="mt-3 grid gap-1 rounded-xl bg-[#f7faf8] p-3 text-xs text-[#68746d]">
                 <p>Total a cobrar: <span class="font-semibold">{{ currency.format(ticket.paymentTotal) }}</span></p>
-                <p>Recibido: <span class="font-semibold">{{ currency.format(ticket.cashReceived ?? 0) }}</span></p>
-                <p>Cambio: <span class="font-semibold">{{ currency.format(ticket.changeDue ?? 0) }}</span></p>
+                <p v-if="ticket.paymentMethod === 'CASH'">Recibido: <span class="font-semibold">{{ currency.format(ticket.cashReceived ?? 0) }}</span></p>
+                <p v-if="ticket.paymentMethod === 'CASH'">Cambio: <span class="font-semibold">{{ currency.format(ticket.changeDue ?? 0) }}</span></p>
               </div>
               <p v-if="ticket.cashSession" class="mt-3 text-xs text-[#7d8781]">Caja: {{ ticket.cashSession.id.slice(-6).toUpperCase() }}</p>
             </div>
@@ -785,10 +829,10 @@ async function holdCurrentTicket() {
                   <p class="font-semibold">{{ ticket.itemCount }}</p>
                 </div>
                 <div class="mt-3 flex items-end justify-between">
-                  <p class="text-lg font-bold">{{ ticket.paymentMethod === 'CASH' ? 'Subtotal' : 'Total' }}</p>
+                  <p class="text-lg font-bold">{{ shouldRoundPaymentMethod(ticket.paymentMethod) ? 'Subtotal' : 'Total' }}</p>
                   <p class="text-3xl font-bold tracking-[-.04em] text-[#1f4937]">{{ currency.format(ticket.total) }}</p>
                 </div>
-                <div v-if="ticket.paymentMethod === 'CASH' && ticket.paymentTotal !== ticket.total" class="mt-3 flex items-center justify-between">
+                <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod) && ticket.paymentTotal !== ticket.total" class="mt-3 flex items-center justify-between">
                   <p class="text-sm text-[#748078]">Total cobrado</p>
                   <p class="text-xl font-bold text-[#1f4937]">{{ currency.format(ticket.paymentTotal) }}</p>
                 </div>

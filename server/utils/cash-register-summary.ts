@@ -7,7 +7,7 @@ function decimalToNumber(value: Prisma.Decimal | null | undefined) {
 }
 
 export async function getCashRegisterSummary(client: CashRegisterSummaryClient, cashSessionId: string, openingAmount: Prisma.Decimal) {
-  const [cashSales, cashSalesCount, cardSales, transferSales, cashIn, adjustment, supplierPayment, withdrawal, expense] = await Promise.all([
+  const [cashSales, cashSalesCount, cardSales, transferSales, creditSales, cashIn, adjustment, supplierPayment, withdrawal, expense] = await Promise.all([
     client.sale.findMany({
       where: { cashSessionId, paymentMethod: 'CASH', canceledAt: null },
       select: { total: true, paymentTotal: true }
@@ -15,12 +15,16 @@ export async function getCashRegisterSummary(client: CashRegisterSummaryClient, 
     client.sale.count({
       where: { cashSessionId, paymentMethod: 'CASH', canceledAt: null }
     }),
-    client.sale.aggregate({
+    client.sale.findMany({
       where: { cashSessionId, paymentMethod: 'CARD', canceledAt: null },
-      _sum: { total: true }
+      select: { total: true, paymentTotal: true }
     }),
     client.sale.aggregate({
       where: { cashSessionId, paymentMethod: 'TRANSFER', canceledAt: null },
+      _sum: { total: true }
+    }),
+    client.sale.aggregate({
+      where: { cashSessionId, paymentMethod: 'CREDIT', canceledAt: null },
       _sum: { total: true }
     }),
     client.cashMovement.aggregate({
@@ -46,8 +50,9 @@ export async function getCashRegisterSummary(client: CashRegisterSummaryClient, 
   ])
 
   const cashSalesTotal = cashSales.reduce((sum, sale) => sum + (sale.paymentTotal ?? sale.total).toNumber(), 0)
-  const cardSalesTotal = decimalToNumber(cardSales._sum.total)
+  const cardSalesTotal = cardSales.reduce((sum, sale) => sum + (sale.paymentTotal ?? sale.total).toNumber(), 0)
   const transferSalesTotal = decimalToNumber(transferSales._sum.total)
+  const creditSalesTotal = decimalToNumber(creditSales._sum.total)
   const cashInTotal = decimalToNumber(cashIn._sum.amount)
   const adjustmentTotal = decimalToNumber(adjustment._sum.amount)
   const supplierPaymentTotal = decimalToNumber(supplierPayment._sum.amount)
@@ -67,7 +72,8 @@ export async function getCashRegisterSummary(client: CashRegisterSummaryClient, 
     cashSalesCount,
     cardSalesTotal,
     transferSalesTotal,
-    nonCashSalesTotal: cardSalesTotal + transferSalesTotal,
+    creditSalesTotal,
+    nonCashSalesTotal: cardSalesTotal + transferSalesTotal + creditSalesTotal,
     cashInTotal,
     adjustmentTotal,
     supplierPaymentTotal,

@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { requireRole } from '../../utils/auth'
 import { operationalRoles } from '../../utils/users'
-import { roundCashPaymentTotal } from '../../utils/cash-rounding'
+import { roundPayableTotal, shouldRoundPaymentMethod } from '../../utils/cash-rounding'
 import { serializeSale } from '../../utils/sales'
 import prisma from '../../../lib/prisma'
 
@@ -14,7 +14,7 @@ type SaleRequestItem = {
   unit?: unknown
 }
 
-const paymentMethods = ['CASH', 'CARD', 'TRANSFER'] as const
+const paymentMethods = ['CASH', 'CARD', 'TRANSFER', 'CREDIT'] as const
 
 export default defineEventHandler(async (event) => {
   const seller = await requireRole(event, operationalRoles)
@@ -25,8 +25,13 @@ export default defineEventHandler(async (event) => {
     ? requestedPaymentMethod as typeof paymentMethods[number]
     : 'CASH'
   const cashReceived = Number(body.cashReceived)
+  const creditCustomerName = String(body.creditCustomerName || '').trim().slice(0, 100)
+  const creditNote = String(body.creditNote || '').trim().slice(0, 180) || null
 
   if (!items.length) throw createError({ statusCode: 400, message: 'Agrega al menos un producto para cobrar la venta.' })
+  if (paymentMethod === 'CREDIT' && creditCustomerName.length < 2) {
+    throw createError({ statusCode: 400, message: 'Indica a quién pertenece la cuenta por cobrar.' })
+  }
 
   const requestedItems = items.map(item => ({
     productId: String(item.productId || ''),
@@ -98,7 +103,7 @@ export default defineEventHandler(async (event) => {
 
     const total = saleItems.reduce((sum, item) => sum.add(item.lineTotal), new Prisma.Decimal(0)).toDecimalPlaces(2)
     const itemCount = saleItems.reduce((sum, item) => sum.add(item.quantity), new Prisma.Decimal(0)).toDecimalPlaces(3)
-    const paymentTotal = paymentMethod === 'CASH' ? roundCashPaymentTotal(total) : total
+    const paymentTotal = shouldRoundPaymentMethod(paymentMethod) ? roundPayableTotal(total) : total
     const receivedAmount = paymentMethod === 'CASH' ? new Prisma.Decimal(Number.isFinite(cashReceived) ? cashReceived.toFixed(2) : '0') : null
     if (paymentMethod === 'CASH' && (!receivedAmount || receivedAmount.lessThan(paymentTotal))) {
       throw createError({ statusCode: 400, message: 'El efectivo recibido debe cubrir el total de la venta.' })
@@ -113,6 +118,8 @@ export default defineEventHandler(async (event) => {
         paymentTotal,
         cashReceived: receivedAmount,
         changeDue,
+        creditCustomerName: paymentMethod === 'CREDIT' ? creditCustomerName : null,
+        creditNote: paymentMethod === 'CREDIT' ? creditNote : null,
         total,
         itemCount,
         items: {
@@ -131,6 +138,7 @@ export default defineEventHandler(async (event) => {
       include: {
         seller: { select: { id: true, fullName: true, email: true } },
         canceledBy: { select: { id: true, fullName: true, email: true } },
+        creditPaidBy: { select: { id: true, fullName: true, email: true } },
         cashSession: { select: { id: true, openedAt: true, status: true } },
         items: true
       }

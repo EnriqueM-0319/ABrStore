@@ -6,6 +6,9 @@ useHead({ title: 'Historial de ventas' })
 
 const page = ref(1)
 const limit = ref(10)
+const startDate = ref('')
+const endDate = ref('')
+const folioSearch = ref('')
 const selectedSale = ref<SaleTicket | null>(null)
 const detailOpen = ref(false)
 const cancelReason = ref('')
@@ -23,15 +26,21 @@ const dateTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeSty
 const paymentMethodLabels = {
   CASH: 'Efectivo',
   CARD: 'Tarjeta',
-  TRANSFER: 'Transferencia'
+  TRANSFER: 'Transferencia',
+  CREDIT: 'Fiado'
 } as const
+
+function shouldRoundPaymentMethod(method: SaleTicket['paymentMethod']) {
+  return method === 'CASH' || method === 'CARD'
+}
 
 const data = ref<SalesHistoryResponse>({ items: [], total: 0, page: 1, limit: 10, pageCount: 1 })
 const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
 const error = ref('')
 const hasCachedPage = ref(false)
 
-const cacheKey = computed(() => `abr_sales_history_${page.value}_${limit.value}`)
+const normalizedFolioSearch = computed(() => folioSearch.value.trim())
+const cacheKey = computed(() => `abr_sales_history_${page.value}_${limit.value}_${startDate.value || 'all'}_${endDate.value || 'all'}_${normalizedFolioSearch.value || 'all'}`)
 
 const sales = computed(() => data.value.items)
 const pageCount = computed(() => data.value.pageCount)
@@ -72,7 +81,13 @@ async function refresh() {
 
   try {
     const nextData = await $fetch<SalesHistoryResponse>('/api/sales', {
-      query: { page: page.value, limit: limit.value }
+      query: {
+        page: page.value,
+        limit: limit.value,
+        startDate: startDate.value || undefined,
+        endDate: endDate.value || undefined,
+        folio: normalizedFolioSearch.value || undefined
+      }
     })
     data.value = nextData
     writeCachedHistory(nextData)
@@ -89,14 +104,20 @@ onMounted(() => {
   void refresh()
 })
 
-watch([page, limit], () => {
+watch([page, limit, startDate, endDate, normalizedFolioSearch], () => {
   readCachedHistory()
   void refresh()
 })
 
-watch(limit, () => {
+watch([limit, startDate, endDate, normalizedFolioSearch], () => {
   page.value = 1
 })
+
+function clearFilters() {
+  startDate.value = ''
+  endDate.value = ''
+  folioSearch.value = ''
+}
 
 function openDetail(sale: SaleTicket) {
   selectedSale.value = sale
@@ -180,6 +201,36 @@ async function cancelSaleItem() {
           <UButton to="/dashboard/ventas" label="Nueva venta" icon="i-lucide-shopping-cart" />
         </div>
 
+        <UCard class="mb-4" :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-4' }">
+          <div class="grid gap-3 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
+            <UFormField label="Número de ticket" name="sales-folio">
+              <UInput
+                v-model="folioSearch"
+                type="number"
+                inputmode="numeric"
+                min="1"
+                placeholder="Ej. 125"
+                class="w-full"
+                aria-label="Buscar venta por número de ticket"
+              />
+            </UFormField>
+            <UFormField label="Desde" name="sales-start-date">
+              <UInput v-model="startDate" type="date" class="w-full" aria-label="Filtrar ventas desde fecha" />
+            </UFormField>
+            <UFormField label="Hasta" name="sales-end-date">
+              <UInput v-model="endDate" type="date" class="w-full" aria-label="Filtrar ventas hasta fecha" />
+            </UFormField>
+            <UButton
+              label="Limpiar filtros"
+              icon="i-lucide-eraser"
+              color="neutral"
+              variant="soft"
+              :disabled="!startDate && !endDate && !folioSearch"
+              @click="clearFilters"
+            />
+          </div>
+        </UCard>
+
         <UAlert v-if="error" class="mb-4" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar el historial" description="Intenta nuevamente en unos segundos.">
           <template #actions><UButton label="Reintentar" color="error" variant="soft" size="sm" @click="refresh()" /></template>
         </UAlert>
@@ -255,10 +306,10 @@ async function cancelSaleItem() {
                 :description="`Cancelado por ${selectedSale.canceledBy?.fullName || 'usuario'}${selectedSale.cancelReason ? ` · ${selectedSale.cancelReason}` : ''}`"
               />
               <p class="mt-2 text-xs text-[#7d8781]">Forma de pago: {{ paymentMethodLabels[selectedSale.paymentMethod] }}</p>
-              <div v-if="selectedSale.paymentMethod === 'CASH'" class="mt-3 grid gap-1 rounded-xl bg-[#f7faf8] p-3 text-xs text-[#68746d]">
+              <div v-if="shouldRoundPaymentMethod(selectedSale.paymentMethod)" class="mt-3 grid gap-1 rounded-xl bg-[#f7faf8] p-3 text-xs text-[#68746d]">
                 <p>Total a cobrar: <span class="font-semibold">{{ currency.format(selectedSale.paymentTotal) }}</span></p>
-                <p>Recibido: <span class="font-semibold">{{ currency.format(selectedSale.cashReceived ?? 0) }}</span></p>
-                <p>Cambio: <span class="font-semibold">{{ currency.format(selectedSale.changeDue ?? 0) }}</span></p>
+                <p v-if="selectedSale.paymentMethod === 'CASH'">Recibido: <span class="font-semibold">{{ currency.format(selectedSale.cashReceived ?? 0) }}</span></p>
+                <p v-if="selectedSale.paymentMethod === 'CASH'">Cambio: <span class="font-semibold">{{ currency.format(selectedSale.changeDue ?? 0) }}</span></p>
               </div>
               <div class="mt-4 rounded-xl bg-[#f7faf8] p-3 text-sm">
                 <p class="font-semibold">Vendedor</p>
@@ -296,10 +347,10 @@ async function cancelSaleItem() {
               </ul>
               <div class="border-t border-[#edf0ed] bg-[#fbfcfb] p-4">
                 <div class="flex items-end justify-between">
-                  <p class="text-lg font-bold">{{ selectedSale.paymentMethod === 'CASH' ? 'Subtotal' : 'Total' }}</p>
+                  <p class="text-lg font-bold">{{ shouldRoundPaymentMethod(selectedSale.paymentMethod) ? 'Subtotal' : 'Total' }}</p>
                   <p class="text-3xl font-bold tracking-[-.04em] text-[#1f4937]">{{ currency.format(selectedSale.total) }}</p>
                 </div>
-                <div v-if="selectedSale.paymentMethod === 'CASH' && selectedSale.paymentTotal !== selectedSale.total" class="mt-3 flex items-center justify-between">
+                <div v-if="shouldRoundPaymentMethod(selectedSale.paymentMethod) && selectedSale.paymentTotal !== selectedSale.total" class="mt-3 flex items-center justify-between">
                   <p class="text-sm text-[#748078]">Total cobrado</p>
                   <p class="text-xl font-bold text-[#1f4937]">{{ currency.format(selectedSale.paymentTotal) }}</p>
                 </div>

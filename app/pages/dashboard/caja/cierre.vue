@@ -130,9 +130,10 @@ async function closeCashRegister() {
             </dl>
           </div>
 
-          <div class="mt-5 grid gap-4 md:grid-cols-2">
+          <div class="mt-5 grid gap-4 md:grid-cols-3">
             <UAlert color="neutral" variant="soft" icon="i-lucide-credit-card" title="Ventas con tarjeta" :description="currency.format(summary.cardSalesTotal)" />
             <UAlert color="neutral" variant="soft" icon="i-lucide-send" title="Ventas por transferencia" :description="currency.format(summary.transferSalesTotal)" />
+            <UAlert color="neutral" variant="soft" icon="i-lucide-hand-coins" title="Ventas fiadas" :description="currency.format(summary.creditSalesTotal)" />
           </div>
         </section>
 
