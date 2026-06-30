@@ -1,38 +1,21 @@
-import { Prisma } from '@prisma/client'
-import { requireRole, operationalRoles, serializeCashMovement } from '../../utils'
-import prisma from '../../../lib/prisma'
+import { cashMovementFields, graphqlRequest } from '../../utils'
 
-const movementTypes = ['SUPPLIER_PAYMENT', 'WITHDRAWAL', 'EXPENSE', 'CASH_IN', 'ADJUSTMENT'] as const
+const createCashMovementMutation = `#graphql
+ mutation CreateCashMovement($input: CreateCashMovementInput!) {
+  createCashMovement(input: $input) {
+   ${cashMovementFields}
+  }
+ }
+`
 
 export default defineEventHandler(async (event) => {
- const user = await requireRole(event, operationalRoles)
  const body = await readBody(event)
- const type = movementTypes.includes(body.type) ? body.type : null
+ const type = String(body.type || '')
  const amount = Number(body.amount)
  const description = String(body.description || '').trim()
-
- if (!type || !Number.isFinite(amount) || amount <= 0 || description.length < 3) {
- throw createError({ statusCode: 400, message: 'Ingresa tipo, monto y descripción válida.' })
- }
-
- const movement = await prisma.$transaction(async (tx) => {
- const cashSession = await tx.cashRegisterSession.findFirst({
- where: { status: 'OPEN' },
- select: { id: true }
- })
- if (!cashSession) throw createError({ statusCode: 409, message: 'Debes abrir caja antes de registrar movimientos.' })
-
- return tx.cashMovement.create({
- data: {
- cashSessionId: cashSession.id,
- createdById: user.id,
- type,
- amount: new Prisma.Decimal(amount.toFixed(2)),
- description
- },
- include: { createdBy: { select: { id: true, fullName: true, email: true } } }
- })
+ const data = await graphqlRequest<{ createCashMovement: unknown }>(event, createCashMovementMutation, {
+  input: { type, amount, description }
  })
 
- return serializeCashMovement(movement)
+ return data.createCashMovement
 })

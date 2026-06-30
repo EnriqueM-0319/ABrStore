@@ -1,14 +1,14 @@
-import { requireRole, operationalRoles, cashRegisterInclude, serializeCashRegisterSession } from '../../utils'
-import prisma from '../../../lib/prisma'
+import { cashRegisterSessionFields, graphqlRequest } from '../../utils'
+
+const currentCashRegisterQuery = `#graphql
+ query CurrentCashRegister {
+  currentCashRegister {
+   ${cashRegisterSessionFields}
+  }
+ }
+`
 
 export default defineEventHandler(async (event) => {
- await requireRole(event, operationalRoles)
-
- const session = await prisma.cashRegisterSession.findFirst({
- where: { status: 'OPEN' },
- include: cashRegisterInclude,
- orderBy: { openedAt: 'desc' }
- })
-
- return session ? serializeCashRegisterSession(session) : null
+ const data = await graphqlRequest<{ currentCashRegister: unknown | null }>(event, currentCashRegisterQuery)
+ return data.currentCashRegister
 })

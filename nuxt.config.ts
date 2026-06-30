@@ -21,7 +21,8 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    sessionSecret: process.env.NUXT_SESSION_SECRET || 'cambia-esta-clave-en-produccion'
+    sessionSecret: process.env.NUXT_SESSION_SECRET || 'cambia-esta-clave-en-produccion',
+    graphqlEndpoint: process.env.NUXT_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql'
   },
 
   modules: [

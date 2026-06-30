@@ -1,4 +1,6 @@
 export * from './auth'
+export * from './graphql'
+export * from './graphqlOperations'
 export * from './cashMovements'
 export * from './cashRegister'
 export * from './cashRegisterSummary'

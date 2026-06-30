@@ -1,22 +1,14 @@
-import { requireRole, operationalRoles, heldTicketInclude, serializeHeldTicket } from '../../utils'
-import prisma from '../../../lib/prisma'
+import { graphqlRequest, heldTicketFields } from '../../utils'
+
+const heldTicketsQuery = `#graphql
+ query HeldTickets {
+  heldTickets {
+   ${heldTicketFields}
+  }
+ }
+`
 
 export default defineEventHandler(async (event) => {
- await requireRole(event, operationalRoles)
-
- const cashSession = await prisma.cashRegisterSession.findFirst({
- where: { status: 'OPEN' },
- select: { id: true }
- })
-
- if (!cashSession) return []
-
- const tickets = await prisma.heldTicket.findMany({
- where: { cashSessionId: cashSession.id },
- include: heldTicketInclude,
- orderBy: { updatedAt: 'desc' },
- take: 20
- })
-
- return tickets.map(serializeHeldTicket)
+ const data = await graphqlRequest<{ heldTickets: unknown[] }>(event, heldTicketsQuery)
+ return data.heldTickets
 })
