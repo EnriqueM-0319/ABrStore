@@ -17,12 +17,12 @@ onMounted(() => {
  <div class="grid gap-5 lg:grid-cols-[1fr_.8fr]">
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-6' }">
  <div class="flex items-start gap-4">
- <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#eaf2ed] text-[#286047]">
+ <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#f1f6fa] text-[#456a88]">
  <UIcon name="i-lucide-chart-bar-big" class="size-6" aria-hidden="true" />
  </span>
  <div>
  <h2 class="text-xl font-bold">Productos e inventario</h2>
- <p class="mt-2 text-sm leading-6 text-[#68746d]">
+ <p class="mt-2 text-sm leading-6 text-[#475569]">
  Este reporte concentrará productos con bajo stock, existencias actuales, precios y movimientos relevantes del inventario.
  </p>
  <div class="mt-5 flex flex-wrap gap-2">
@@ -35,10 +35,10 @@ onMounted(() => {
 
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-6' }">
  <h3 class="font-bold">Próximas métricas</h3>
- <ul class="mt-4 space-y-3 text-sm text-[#68746d]">
- <li class="flex gap-2"><UIcon name="i-lucide-check" class="mt-0.5 size-4 text-emerald-700" /> Productos con existencias bajas.</li>
- <li class="flex gap-2"><UIcon name="i-lucide-check" class="mt-0.5 size-4 text-emerald-700" /> Productos más vendidos.</li>
- <li class="flex gap-2"><UIcon name="i-lucide-check" class="mt-0.5 size-4 text-emerald-700" /> Salidas por caducidad o daño.</li>
+ <ul class="mt-4 space-y-3 text-sm text-[#475569]">
+ <li class="flex gap-2"><UIcon name="i-lucide-check" class="mt-0.5 size-4 text-sky-700" /> Productos con existencias bajas.</li>
+ <li class="flex gap-2"><UIcon name="i-lucide-check" class="mt-0.5 size-4 text-sky-700" /> Productos más vendidos.</li>
+ <li class="flex gap-2"><UIcon name="i-lucide-check" class="mt-0.5 size-4 text-sky-700" /> Salidas por caducidad o daño.</li>
  </ul>
  </UCard>
  </div>

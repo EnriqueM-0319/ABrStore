@@ -96,7 +96,7 @@ function goToPage(nextPage: number) {
  <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
  <div>
  <h2 id="exit-history-title" class="text-xl font-bold">Salidas registradas</h2>
- <p class="mt-1 text-sm text-[#78827c]">Bajas por caducidad o daño con responsable y nota.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Bajas por caducidad o daño con responsable y nota.</p>
  </div>
  <UButton to="/dashboard/stockExits" label="Registrar salida" icon="i-lucide-package-minus" />
  </div>
@@ -104,33 +104,33 @@ function goToPage(nextPage: number) {
  <UAlert v-if="error" class="mb-4" color="error" variant="soft" title="No pudimos cargar las salidas">
  <template #actions><UButton label="Reintentar" color="error" variant="soft" size="sm" @click="refresh()" /></template>
  </UAlert>
- <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+ <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-600" role="status" aria-live="polite">
  <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />
  <span>Actualizando historial…</span>
  </div>
 
  <USkeleton v-if="isLoading" class="h-96 rounded-2xl" />
- <div v-else-if="!exits.length" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white p-12 text-center">
- <UIcon name="i-lucide-package-minus" class="mx-auto size-9 text-[#929d96]" />
+ <div v-else-if="!exits.length" class="rounded-2xl border border-dashed border-[#c7dbe8] bg-white p-12 text-center">
+ <UIcon name="i-lucide-package-minus" class="mx-auto size-9 text-[#94a3b8]" />
  <h3 class="mt-4 font-semibold">Aún no hay salidas</h3>
- <p class="mt-1 text-sm text-[#7d8781]">Cuando registres una salida aparecerá aquí.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Cuando registres una salida aparecerá aquí.</p>
  </div>
 
- <div v-else class="overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
- <ul class="divide-y divide-[#edf0ed]" aria-label="Historial de salidas">
+ <div v-else class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white">
+ <ul class="divide-y divide-[#d8e7f1]" aria-label="Historial de salidas">
  <li v-for="stockExit in exits" :key="stockExit.id" class="p-4 sm:px-5">
  <div class="flex flex-col gap-3 sm:flex-row sm:justify-between">
  <div class="min-w-0">
  <div class="flex flex-wrap items-center gap-2"><p class="truncate text-sm font-semibold">{{ stockExit.name }}</p><UBadge :label="stockExit.reason === 'EXPIRED' ? 'Caducidad' : 'Dañado'" :color="stockExit.reason === 'EXPIRED' ? 'warning' : 'error'" variant="soft" size="sm" /></div>
- <p class="mt-1 text-xs text-[#7d8781]">{{ stockExit.quantity }} {{ stockExit.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} · {{ stockExit.user.fullName }}</p>
- <p v-if="stockExit.note" class="mt-2 text-xs text-[#69736d]">{{ stockExit.note }}</p>
+ <p class="mt-1 text-xs text-[#64748b]">{{ stockExit.quantity }} {{ stockExit.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} · {{ stockExit.user.fullName }}</p>
+ <p v-if="stockExit.note" class="mt-2 text-xs text-[#475569]">{{ stockExit.note }}</p>
  </div>
- <p class="whitespace-nowrap text-xs text-[#7d8781]">{{ dateTime.format(new Date(stockExit.createdAt)) }}</p>
+ <p class="whitespace-nowrap text-xs text-[#64748b]">{{ dateTime.format(new Date(stockExit.createdAt)) }}</p>
  </div>
  </li>
  </ul>
- <div class="flex flex-col gap-3 border-t border-[#edf0ed] bg-[#fbfcfb] p-4 sm:flex-row sm:items-end sm:justify-between">
- <p class="text-sm text-[#7d8781]">Mostrando {{ pageStart }}-{{ pageEnd }} de {{ exitsData.total }} salidas</p>
+ <div class="flex flex-col gap-3 border-t border-[#d8e7f1] bg-[#f7fafc] p-4 sm:flex-row sm:items-end sm:justify-between">
+ <p class="text-sm text-[#64748b]">Mostrando {{ pageStart }}-{{ pageEnd }} de {{ exitsData.total }} salidas</p>
  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
  <UFormField label="Mostrar" size="xs"><USelect v-model="limit" :items="limitOptions" value-key="value" label-key="label" class="w-full sm:w-44" /></UFormField>
  <nav class="flex items-center gap-2" aria-label="Paginación de salidas">

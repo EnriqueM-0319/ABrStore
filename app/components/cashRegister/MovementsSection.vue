@@ -91,7 +91,7 @@ async function saveMovement() {
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', header: 'p-5 sm:px-6', body: 'p-5 sm:px-6' }">
  <template #header>
  <h2 class="font-bold">Registrar movimiento</h2>
- <p class="mt-1 text-sm text-[#78827c]">Pagos a proveedores, gastos, retiros, entradas o ajustes.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Pagos a proveedores, gastos, retiros, entradas o ajustes.</p>
  </template>
 
  <form class="space-y-4" @submit.prevent="saveMovement">
@@ -113,24 +113,24 @@ async function saveMovement() {
  <section aria-labelledby="cash-movement-history" :aria-busy="isLoading || isRefreshing">
  <div class="mb-4">
  <h2 id="cash-movement-history" class="text-xl font-bold">Movimientos de la caja actual</h2>
- <p class="mt-1 text-sm text-[#78827c]">Estos importes se contemplarán en el cierre de caja.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Estos importes se contemplarán en el cierre de caja.</p>
  </div>
 
  <UAlert v-if="error" class="mb-4" color="error" variant="soft" title="No pudimos cargar movimientos">
  <template #actions><UButton label="Reintentar" color="error" variant="soft" size="sm" @click="refresh()" /></template>
  </UAlert>
- <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+ <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-600" role="status" aria-live="polite">
  <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" />
  <span>Actualizando movimientos…</span>
  </div>
  <USkeleton v-if="isLoading" class="h-96 rounded-2xl" />
- <div v-else-if="!movements.length" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white p-12 text-center">
- <UIcon name="i-lucide-wallet-cards" class="mx-auto size-9 text-[#929d96]" />
+ <div v-else-if="!movements.length" class="rounded-2xl border border-dashed border-[#c7dbe8] bg-white p-12 text-center">
+ <UIcon name="i-lucide-wallet-cards" class="mx-auto size-9 text-[#94a3b8]" />
  <h3 class="mt-4 font-semibold">Sin movimientos</h3>
- <p class="mt-1 text-sm text-[#7d8781]">Los movimientos de la caja abierta aparecerán aquí.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Los movimientos de la caja abierta aparecerán aquí.</p>
  </div>
- <div v-else class="overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
- <ul class="divide-y divide-[#edf0ed]">
+ <div v-else class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white">
+ <ul class="divide-y divide-[#d8e7f1]">
  <li v-for="movement in movements" :key="movement.id" class="p-4 sm:px-5">
  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
  <div class="min-w-0">
@@ -138,14 +138,14 @@ async function saveMovement() {
  <p class="font-semibold">{{ movement.description }}</p>
  <UBadge :label="movementLabel(movement.type)" :color="movementColor(movement.type)" variant="soft" size="sm" />
  </div>
- <p class="mt-1 text-xs text-[#7d8781]">{{ movement.createdBy.fullName }} · {{ dateTime.format(new Date(movement.createdAt)) }}</p>
+ <p class="mt-1 text-xs text-[#64748b]">{{ movement.createdBy.fullName }} · {{ dateTime.format(new Date(movement.createdAt)) }}</p>
  </div>
- <p class="whitespace-nowrap text-lg font-bold" :class="movement.type === 'CASH_IN' ? 'text-emerald-700' : 'text-red-700'">{{ currency.format(movement.amount) }}</p>
+ <p class="whitespace-nowrap text-lg font-bold" :class="movement.type === 'CASH_IN' ? 'text-sky-700' : 'text-red-700'">{{ currency.format(movement.amount) }}</p>
  </div>
  </li>
  </ul>
- <div class="flex flex-col gap-3 border-t border-[#edf0ed] bg-[#fbfcfb] p-4 sm:flex-row sm:items-end sm:justify-between">
- <p class="text-sm text-[#7d8781]">Mostrando {{ pageStart }}-{{ pageEnd }} de {{ data.total }} movimientos</p>
+ <div class="flex flex-col gap-3 border-t border-[#d8e7f1] bg-[#f7fafc] p-4 sm:flex-row sm:items-end sm:justify-between">
+ <p class="text-sm text-[#64748b]">Mostrando {{ pageStart }}-{{ pageEnd }} de {{ data.total }} movimientos</p>
  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
  <UFormField label="Mostrar" size="xs"><USelect v-model="limit" :items="limitOptions" value-key="value" label-key="label" class="w-full sm:w-44" /></UFormField>
  <nav class="flex items-center gap-2" aria-label="Paginación de movimientos">

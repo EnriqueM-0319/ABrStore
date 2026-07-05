@@ -142,7 +142,7 @@ async function toggleUserStatus(managedUser: ManagedUser) {
  <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
  <div>
  <h2 class="text-xl font-bold tracking-tight">Usuarios del sistema</h2>
- <p class="mt-1 max-w-2xl text-sm text-[#7d8781]">
+ <p class="mt-1 max-w-2xl text-sm text-[#64748b]">
  {{ user?.role === 'SUPERADMIN' ? 'Puedes ver y administrar superadmins, administradores y colaboradores.' : 'Como administrador solo puedes ver y administrar colaboradores.' }}
  </p>
  </div>
@@ -171,24 +171,24 @@ async function toggleUserStatus(managedUser: ManagedUser) {
  <UButton label="Reintentar" color="error" variant="soft" size="sm" @click="refresh()" />
  </template>
  </UAlert>
- <div v-else-if="!users.length" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white px-6 py-14 text-center">
+ <div v-else-if="!users.length" class="rounded-2xl border border-dashed border-[#c7dbe8] bg-white px-6 py-14 text-center">
  <UIcon name="i-lucide-users" class="mx-auto size-8 text-[#a0aaa4]" aria-hidden="true" />
  <p class="mt-3 font-semibold">No hay usuarios para mostrar</p>
- <p class="mt-1 text-sm text-[#89928d]">Prueba con otra búsqueda o registra un usuario nuevo.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Prueba con otra búsqueda o registra un usuario nuevo.</p>
  </div>
  <div v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
  <UCard v-for="managedUser in users" :key="managedUser.id" :ui="{ root: 'rounded-2xl ring-[#e4e8e4]', body: 'p-5' }">
  <div class="flex items-start justify-between gap-4">
  <div class="min-w-0">
  <p class="truncate font-bold">{{ managedUser.fullName }}</p>
- <p class="mt-1 text-sm text-[#68746d]">@{{ managedUser.username || 'sin.usuario' }}</p>
+ <p class="mt-1 text-sm text-[#475569]">@{{ managedUser.username || 'sin.usuario' }}</p>
  </div>
  <UBadge :label="managedUser.active ? 'Activo' : 'Inactivo'" :color="managedUser.active ? 'success' : 'neutral'" variant="soft" />
  </div>
- <div class="mt-4 space-y-2 text-sm text-[#68746d]">
- <p class="truncate"><span class="font-semibold text-[#26322c]">Correo:</span> {{ managedUser.email }}</p>
- <p><span class="font-semibold text-[#26322c]">Teléfono:</span> {{ managedUser.phone }}</p>
- <p><span class="font-semibold text-[#26322c]">Rol:</span> {{ roleLabels[managedUser.role] }}</p>
+ <div class="mt-4 space-y-2 text-sm text-[#475569]">
+ <p class="truncate"><span class="font-semibold text-[#0f172a]">Correo:</span> {{ managedUser.email }}</p>
+ <p><span class="font-semibold text-[#0f172a]">Teléfono:</span> {{ managedUser.phone }}</p>
+ <p><span class="font-semibold text-[#0f172a]">Rol:</span> {{ roleLabels[managedUser.role] }}</p>
  </div>
  <div class="mt-5 flex flex-col gap-2 sm:flex-row">
  <UButton label="Editar" icon="i-lucide-pencil" size="sm" class="flex-1 justify-center" @click="openEdit(managedUser)" />

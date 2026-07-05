@@ -1,8 +1,8 @@
-import { graphqlRequest, saleFields } from '../../utils'
+import { getPositiveNumberQueryValue, getTrimmedQueryValue, graphqlRequest, saleFields } from '../../utils'
 
 const receivablesQuery = `#graphql
- query Receivables($status: String, $page: Float, $limit: Float) {
-  receivables(status: $status, page: $page, limit: $limit) {
+ query Receivables($status: String, $page: Float, $limit: Float, $search: String) {
+  receivables(status: $status, page: $page, limit: $limit, search: $search) {
    items { ${saleFields} }
    total
    page
@@ -15,9 +15,10 @@ const receivablesQuery = `#graphql
 export default defineEventHandler(async (event) => {
  const query = getQuery(event)
  const data = await graphqlRequest<{ receivables: unknown }>(event, receivablesQuery, {
-  status: typeof query.status === 'string' ? query.status : undefined,
-  page: Number(query.page) || undefined,
-  limit: Number(query.limit) || undefined
+  status: getTrimmedQueryValue(query.status, 24),
+  page: getPositiveNumberQueryValue(query.page),
+  limit: getPositiveNumberQueryValue(query.limit),
+  search: getTrimmedQueryValue(query.search, 80)
  })
  return data.receivables
 })

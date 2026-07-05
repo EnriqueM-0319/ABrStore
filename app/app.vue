@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useHead({
- titleTemplate: (title) => title ? `${title} · ABR Store` : 'ABR Store',
- meta: [{ name: 'description', content: 'Tu cuenta de ABR Store' }],
+ titleTemplate: (title) => title ? `${title} · Abarrotes Alex` : 'Abarrotes Alex',
+ meta: [{ name: 'description', content: 'Sistema de inventario y punto de venta de Abarrotes Alex' }],
  htmlAttrs: { lang: 'es' }
 })
 </script>

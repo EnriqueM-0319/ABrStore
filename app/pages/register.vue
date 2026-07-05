@@ -66,7 +66,7 @@ async function submit() {
  <template #header>
  <div>
  <h2 class="text-lg font-bold">Nuevo acceso al sistema</h2>
- <p class="mt-1 text-sm text-[#7d8781]">El usuario iniciará sesión con el nombre generado, no con su correo.</p>
+ <p class="mt-1 text-sm text-[#64748b]">El usuario iniciará sesión con el nombre generado, no con su correo.</p>
  </div>
  </template>
  <form class="space-y-4" @submit.prevent="submit">
@@ -101,16 +101,16 @@ async function submit() {
  <aside class="space-y-4">
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
  <h3 class="font-bold">Permisos actuales</h3>
- <ul class="mt-4 space-y-3 text-sm text-[#68746d]">
- <li><span class="font-semibold text-[#26322c]">Superadmin:</span> podrá administrar accesos avanzados y futuras pantallas restringidas.</li>
- <li><span class="font-semibold text-[#26322c]">Administrador:</span> puede registrar colaboradores y operar el sistema.</li>
- <li><span class="font-semibold text-[#26322c]">Colaborador:</span> puede vender y operar módulos permitidos.</li>
+ <ul class="mt-4 space-y-3 text-sm text-[#475569]">
+ <li><span class="font-semibold text-[#0f172a]">Superadmin:</span> podrá administrar accesos avanzados y futuras pantallas restringidas.</li>
+ <li><span class="font-semibold text-[#0f172a]">Administrador:</span> puede registrar colaboradores y operar el sistema.</li>
+ <li><span class="font-semibold text-[#0f172a]">Colaborador:</span> puede vender y operar módulos permitidos.</li>
  </ul>
  </UCard>
- <UCard v-if="createdUser" :ui="{ root: 'rounded-2xl ring-emerald-200 bg-emerald-50', body: 'p-5' }">
- <p class="text-sm font-semibold text-emerald-900">Datos para entregar</p>
- <p class="mt-3 text-2xl font-bold tracking-tight text-emerald-950">{{ createdUser.username }}</p>
- <p class="mt-1 text-sm text-emerald-800">{{ createdUser.fullName }} · {{ roleLabels[createdUser.role] }}</p>
+ <UCard v-if="createdUser" :ui="{ root: 'rounded-2xl ring-sky-200 bg-sky-50', body: 'p-5' }">
+ <p class="text-sm font-semibold text-slate-700">Datos para entregar</p>
+ <p class="mt-3 text-2xl font-bold tracking-tight text-slate-800">{{ createdUser.username }}</p>
+ <p class="mt-1 text-sm text-slate-600">{{ createdUser.fullName }} · {{ roleLabels[createdUser.role] }}</p>
  </UCard>
  </aside>
  </div>

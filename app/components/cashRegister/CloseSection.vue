@@ -25,8 +25,8 @@ const expectedAmount = computed(() => summary.value?.expectedAmount ?? 0)
 const previewDifference = computed(() => Number.isFinite(countedAmount.value) ? countedAmount.value - expectedAmount.value : 0)
 
 function differenceColor(value: number) {
- if (value === 0) return 'text-emerald-700'
- return value > 0 ? 'text-sky-700' : 'text-red-700'
+ if (value === 0) return 'text-sky-700 dark:text-[#c8d6df]'
+ return value > 0 ? 'text-sky-700 dark:text-[#c8d6df]' : 'text-red-700 dark:text-red-300'
 }
 
 async function refreshAll() {
@@ -78,50 +78,50 @@ async function closeCashRegister() {
  <section aria-labelledby="cash-summary-title">
  <div class="mb-4">
  <h2 id="cash-summary-title" class="text-xl font-bold">Resumen para cierre</h2>
- <p class="mt-1 text-sm text-[#78827c]">Solo las ventas en efectivo afectan el efectivo esperado. Tarjeta y transferencia quedan como referencia del historial.</p>
+ <p class="mt-1 text-sm text-[#64748b] dark:text-slate-300">Solo las ventas en efectivo afectan el efectivo esperado. Tarjeta y transferencia quedan como referencia del historial.</p>
  </div>
 
  <div class="grid gap-4 md:grid-cols-2">
- <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5 sm:p-6' }">
- <p class="text-sm text-[#78827c]">Caja inicial</p>
- <p class="mt-2 text-3xl font-bold tracking-[-.04em] text-[#1f4937]">{{ currency.format(summary.openingAmount) }}</p>
- <p class="mt-2 text-xs text-[#7d8781]">Abierta por {{ cashSession.openedBy.fullName }} · {{ dateTime.format(new Date(cashSession.openedAt)) }}</p>
+ <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de] dark:ring-slate-600 dark:bg-slate-800', body: 'p-5 sm:p-6' }">
+ <p class="text-sm text-[#64748b] dark:text-slate-300">Caja inicial</p>
+ <p class="mt-2 text-3xl font-bold tracking-[-.04em] text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(summary.openingAmount) }}</p>
+ <p class="mt-2 text-xs text-[#64748b] dark:text-slate-300">Abierta por {{ cashSession.openedBy.fullName }} · {{ dateTime.format(new Date(cashSession.openedAt)) }}</p>
  </UCard>
- <UCard :ui="{ root: 'rounded-2xl ring-emerald-200 bg-emerald-50/70', body: 'p-5 sm:p-6' }">
- <p class="text-sm text-emerald-800">Efectivo esperado</p>
- <p class="mt-2 text-3xl font-bold tracking-[-.04em] text-emerald-950">{{ currency.format(summary.expectedAmount) }}</p>
- <p class="mt-2 text-xs text-emerald-800">Caja inicial + efectivo vendido + entradas - salidas.</p>
+ <UCard :ui="{ root: 'rounded-2xl ring-[#d8e7f1] bg-[#f7fafc] dark:ring-slate-600 dark:bg-slate-800', body: 'p-5 sm:p-6' }">
+ <p class="text-sm text-slate-600 dark:text-slate-300">Efectivo esperado</p>
+ <p class="mt-2 text-3xl font-bold tracking-[-.04em] text-slate-800 dark:text-[#c8d6df]">{{ currency.format(summary.expectedAmount) }}</p>
+ <p class="mt-2 text-xs text-slate-600 dark:text-slate-300">Caja inicial + efectivo vendido + entradas - salidas.</p>
  </UCard>
  </div>
 
- <div class="mt-5 overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
- <div class="border-b border-[#edf0ed] bg-[#fbfcfb] p-4 sm:px-5">
+ <div class="mt-5 overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white dark:border-slate-600 dark:bg-slate-800">
+ <div class="border-b border-[#d8e7f1] bg-[#f7fafc] p-4 sm:px-5 dark:border-slate-600 dark:bg-slate-700">
  <h3 class="font-bold">Desglose</h3>
  </div>
- <dl class="divide-y divide-[#edf0ed]">
+ <dl class="divide-y divide-[#d8e7f1] dark:divide-slate-600">
  <div class="flex items-center justify-between gap-4 p-4 sm:px-5">
- <dt class="text-sm text-[#627068]">Ventas en efectivo <span class="text-xs text-[#8b948f]">({{ summary.cashSalesCount }} ventas)</span></dt>
- <dd class="font-bold text-emerald-700">+ {{ currency.format(summary.cashSalesTotal) }}</dd>
+ <dt class="text-sm text-[#627068] dark:text-slate-300">Ventas en efectivo <span class="text-xs text-[#8b948f] dark:text-slate-400">({{ summary.cashSalesCount }} ventas)</span></dt>
+ <dd class="font-bold text-sky-700 dark:text-[#c8d6df]">+ {{ currency.format(summary.cashSalesTotal) }}</dd>
  </div>
  <div class="flex items-center justify-between gap-4 p-4 sm:px-5">
- <dt class="text-sm text-[#627068]">Entradas de efectivo</dt>
- <dd class="font-bold text-emerald-700">+ {{ currency.format(summary.cashInTotal) }}</dd>
+ <dt class="text-sm text-[#627068] dark:text-slate-300">Entradas de efectivo</dt>
+ <dd class="font-bold text-sky-700 dark:text-[#c8d6df]">+ {{ currency.format(summary.cashInTotal) }}</dd>
  </div>
  <div class="flex items-center justify-between gap-4 p-4 sm:px-5">
- <dt class="text-sm text-[#627068]">Ajustes</dt>
- <dd class="font-bold text-amber-700">+ {{ currency.format(summary.adjustmentTotal) }}</dd>
+ <dt class="text-sm text-[#627068] dark:text-slate-300">Ajustes</dt>
+ <dd class="font-bold text-amber-700 dark:text-amber-300">+ {{ currency.format(summary.adjustmentTotal) }}</dd>
  </div>
  <div class="flex items-center justify-between gap-4 p-4 sm:px-5">
- <dt class="text-sm text-[#627068]">Pagos a proveedores</dt>
- <dd class="font-bold text-red-700">- {{ currency.format(summary.supplierPaymentTotal) }}</dd>
+ <dt class="text-sm text-[#627068] dark:text-slate-300">Pagos a proveedores</dt>
+ <dd class="font-bold text-red-700 dark:text-red-300">- {{ currency.format(summary.supplierPaymentTotal) }}</dd>
  </div>
  <div class="flex items-center justify-between gap-4 p-4 sm:px-5">
- <dt class="text-sm text-[#627068]">Retiros de efectivo</dt>
- <dd class="font-bold text-red-700">- {{ currency.format(summary.withdrawalTotal) }}</dd>
+ <dt class="text-sm text-[#627068] dark:text-slate-300">Retiros de efectivo</dt>
+ <dd class="font-bold text-red-700 dark:text-red-300">- {{ currency.format(summary.withdrawalTotal) }}</dd>
  </div>
  <div class="flex items-center justify-between gap-4 p-4 sm:px-5">
- <dt class="text-sm text-[#627068]">Gastos operativos</dt>
- <dd class="font-bold text-red-700">- {{ currency.format(summary.expenseTotal) }}</dd>
+ <dt class="text-sm text-[#627068] dark:text-slate-300">Gastos operativos</dt>
+ <dd class="font-bold text-red-700 dark:text-red-300">- {{ currency.format(summary.expenseTotal) }}</dd>
  </div>
  </dl>
  </div>
@@ -134,23 +134,23 @@ async function closeCashRegister() {
  </section>
 
  <aside aria-labelledby="close-cash-title" class="xl:sticky xl:top-28">
- <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', header: 'p-5 sm:px-6', body: 'p-5 sm:px-6' }">
+ <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de] dark:ring-slate-600 dark:bg-slate-800', header: 'p-5 sm:px-6', body: 'p-5 sm:px-6' }">
  <template #header>
  <h2 id="close-cash-title" class="font-bold">Cerrar caja</h2>
- <p class="mt-1 text-sm text-[#78827c]">Captura cuánto efectivo contaste físicamente.</p>
+ <p class="mt-1 text-sm text-[#64748b] dark:text-slate-300">Captura cuánto efectivo contaste físicamente.</p>
  </template>
 
  <form class="space-y-4" @submit.prevent="closeCashRegister">
  <UFormField label="Efectivo contado" name="closingAmount" required>
  <UInput v-model="form.closingAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" class="w-full" />
  </UFormField>
- <div class="rounded-2xl bg-[#f7faf8] p-4">
+ <div class="rounded-2xl bg-[#f7fafc] p-4 dark:bg-slate-700">
  <div class="flex items-center justify-between">
- <p class="text-sm text-[#748078]">Esperado</p>
+ <p class="text-sm text-[#64748b] dark:text-slate-300">Esperado</p>
  <p class="font-bold">{{ currency.format(summary.expectedAmount) }}</p>
  </div>
  <div class="mt-3 flex items-center justify-between">
- <p class="text-sm text-[#748078]">Diferencia previa</p>
+ <p class="text-sm text-[#64748b] dark:text-slate-300">Diferencia previa</p>
  <p class="text-xl font-bold" :class="differenceColor(previewDifference)">{{ currency.format(previewDifference) }}</p>
  </div>
  </div>
@@ -162,10 +162,10 @@ async function closeCashRegister() {
  </form>
  </UCard>
 
- <UCard v-if="closeResult" class="mt-5" :ui="{ root: 'rounded-2xl ring-emerald-200 bg-emerald-50/70', body: 'p-5 sm:p-6' }">
- <h3 class="font-bold text-emerald-950">Último cierre realizado</h3>
- <p class="mt-2 text-sm text-emerald-800">Contado: {{ currency.format(closeResult.session.closingAmount ?? 0) }}</p>
- <p class="text-sm text-emerald-800">Esperado: {{ currency.format(closeResult.session.expectedAmount ?? 0) }}</p>
+ <UCard v-if="closeResult" class="mt-5" :ui="{ root: 'rounded-2xl ring-[#d8e7f1] bg-[#f7fafc] dark:ring-slate-600 dark:bg-slate-800', body: 'p-5 sm:p-6' }">
+ <h3 class="font-bold text-slate-800 dark:text-slate-100">Último cierre realizado</h3>
+ <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Contado: {{ currency.format(closeResult.session.closingAmount ?? 0) }}</p>
+ <p class="text-sm text-slate-600 dark:text-slate-300">Esperado: {{ currency.format(closeResult.session.expectedAmount ?? 0) }}</p>
  <p class="text-sm font-bold" :class="differenceColor(closeResult.session.difference ?? 0)">Diferencia: {{ currency.format(closeResult.session.difference ?? 0) }}</p>
  </UCard>
  </aside>

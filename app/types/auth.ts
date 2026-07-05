@@ -9,3 +9,8 @@ export type AuthUser = {
  role: UserRole
  active: boolean
 }
+
+export type SessionUser = {
+ displayName: string
+ role: UserRole
+}

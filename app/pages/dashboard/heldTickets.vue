@@ -109,7 +109,7 @@ async function deleteTicket(ticket: HeldTicket) {
  <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
  <div>
  <h2 class="text-xl font-bold tracking-tight">Ventas en espera</h2>
- <p class="mt-1 text-sm text-[#748078]">Revisa, recupera o elimina tickets pendientes de la caja actual.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Revisa, recupera o elimina tickets pendientes de la caja actual.</p>
  </div>
  <UButton
  label="Actualizar"
@@ -176,11 +176,11 @@ async function deleteTicket(ticket: HeldTicket) {
 
  <UCard v-else-if="!tickets.length" :ui="{ root: 'rounded-2xl ring-[#dde3de]' }">
  <div class="py-16 text-center">
- <span class="mx-auto grid size-14 place-items-center rounded-2xl bg-[#eaf2ed] text-[#286047]">
+ <span class="mx-auto grid size-14 place-items-center rounded-2xl bg-[#f1f6fa] text-[#456a88]">
  <UIcon name="i-lucide-bookmark-check" class="size-7" aria-hidden="true" />
  </span>
  <h3 class="mt-4 text-lg font-bold">No hay tickets guardados</h3>
- <p class="mx-auto mt-2 max-w-md text-sm text-[#748078]">Cuando guardes una venta desde punto de venta, aparecerá aquí para recuperarla después.</p>
+ <p class="mx-auto mt-2 max-w-md text-sm text-[#64748b]">Cuando guardes una venta desde punto de venta, aparecerá aquí para recuperarla después.</p>
  <UButton class="mt-5" to="/dashboard/sales" label="Ir a punto de venta" icon="i-lucide-monitor-up" />
  </div>
  </UCard>
@@ -192,19 +192,19 @@ async function deleteTicket(ticket: HeldTicket) {
  :key="ticket.id"
  type="button"
  class="w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition hover:border-[#b9c8bf] hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
- :class="selectedTicket?.id === ticket.id ? 'border-[#286047] ring-1 ring-[#286047]' : 'border-[#dde3de]'"
+ :class="selectedTicket?.id === ticket.id ? 'border-[#456a88] ring-1 ring-[#456a88]' : 'border-[#dde3de]'"
  :aria-current="selectedTicket?.id === ticket.id ? 'true' : undefined"
  @click="selectedTicketId = ticket.id"
  >
  <div class="flex items-start justify-between gap-3">
  <div class="min-w-0">
- <p class="text-xs font-bold uppercase tracking-[.16em] text-[#7a847e]">Ticket {{ shortTicketId(ticket) }}</p>
+ <p class="text-xs font-bold uppercase tracking-[.16em] text-[#64748b]">Ticket {{ shortTicketId(ticket) }}</p>
  <h3 class="mt-1 truncate text-base font-bold">{{ ticket.note || 'Sin nota' }}</h3>
- <p class="mt-1 text-xs text-[#7d8781]">{{ dateTime.format(new Date(ticket.updatedAt)) }}</p>
+ <p class="mt-1 text-xs text-[#64748b]">{{ dateTime.format(new Date(ticket.updatedAt)) }}</p>
  </div>
- <p class="shrink-0 text-lg font-black text-[#1f4937]">{{ currency.format(ticket.total) }}</p>
+ <p class="shrink-0 text-lg font-black text-[#456a88]">{{ currency.format(ticket.total) }}</p>
  </div>
- <div class="mt-3 flex items-center justify-between gap-2 text-xs text-[#68746d]">
+ <div class="mt-3 flex items-center justify-between gap-2 text-xs text-[#475569]">
  <span>{{ ticket.itemCount }} {{ ticket.itemCount === 1 ? 'artículo' : 'artículos' }}</span>
  <span>{{ ticket.createdBy.fullName }}</span>
  </div>
@@ -216,9 +216,9 @@ async function deleteTicket(ticket: HeldTicket) {
  <template #header>
  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
  <div>
- <p class="text-xs font-bold uppercase tracking-[.18em] text-[#7d8781]">Ticket {{ shortTicketId(selectedTicket) }}</p>
+ <p class="text-xs font-bold uppercase tracking-[.18em] text-[#64748b]">Ticket {{ shortTicketId(selectedTicket) }}</p>
  <h2 id="ticket-detail-title" class="mt-1 text-xl font-bold">{{ selectedTicket.note || 'Ticket guardado' }}</h2>
- <p class="mt-1 text-sm text-[#748078]">Guardado por {{ selectedTicket.createdBy.fullName }} · {{ dateTime.format(new Date(selectedTicket.createdAt)) }}</p>
+ <p class="mt-1 text-sm text-[#64748b]">Guardado por {{ selectedTicket.createdBy.fullName }} · {{ dateTime.format(new Date(selectedTicket.createdAt)) }}</p>
  </div>
  <UBadge label="En espera" color="primary" variant="soft" />
  </div>
@@ -232,7 +232,7 @@ async function deleteTicket(ticket: HeldTicket) {
  <span class="text-center">Cant.</span>
  <span class="text-right">Importe</span>
  </div>
- <ul class="divide-y divide-[#edf0ed]" aria-label="Productos del ticket guardado">
+ <ul class="divide-y divide-[#d8e7f1]" aria-label="Productos del ticket guardado">
  <li
  v-for="item in selectedTicket.items"
  :key="item.id"
@@ -241,23 +241,23 @@ async function deleteTicket(ticket: HeldTicket) {
  <span class="truncate text-xs text-[#617068]">{{ item.sku }}</span>
  <span class="min-w-0">
  <span class="block truncate font-semibold">{{ item.name }}</span>
- <span class="block truncate text-xs text-[#7d8781]">{{ item.description || 'Sin descripción' }}</span>
+ <span class="block truncate text-xs text-[#64748b]">{{ item.description || 'Sin descripción' }}</span>
  </span>
  <span class="text-right text-xs font-semibold">{{ currency.format(item.unitPrice) }}</span>
  <span class="text-center text-xs">{{ item.quantity }} {{ unitLabel(item.unit) }}</span>
- <span class="text-right text-sm font-bold text-emerald-700">{{ currency.format(item.lineTotal) }}</span>
+ <span class="text-right text-sm font-bold text-sky-700">{{ currency.format(item.lineTotal) }}</span>
  </li>
  </ul>
  </div>
 
  <template #footer>
  <div class="space-y-4">
- <div class="flex items-center justify-between rounded-2xl bg-[#edf7f0] px-4 py-3">
+ <div class="flex items-center justify-between rounded-2xl bg-[#f1f6fa] px-4 py-3">
  <div>
  <p class="text-xs font-bold uppercase tracking-[.14em] text-[#456052]">Total pendiente</p>
- <p class="text-sm text-[#748078]">{{ selectedTicket.itemCount }} {{ selectedTicket.itemCount === 1 ? 'artículo' : 'artículos' }}</p>
+ <p class="text-sm text-[#64748b]">{{ selectedTicket.itemCount }} {{ selectedTicket.itemCount === 1 ? 'artículo' : 'artículos' }}</p>
  </div>
- <p class="text-3xl font-black tracking-[-.04em] text-[#233071]">{{ currency.format(selectedTicket.total) }}</p>
+ <p class="text-3xl font-black tracking-[-.04em] text-[#385872]">{{ currency.format(selectedTicket.total) }}</p>
  </div>
  <div class="grid gap-2 sm:grid-cols-3">
  <UButton

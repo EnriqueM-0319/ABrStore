@@ -139,7 +139,7 @@ async function permanentlyDeleteProduct() {
  <div class="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
  <div>
  <h2 id="products-title" class="text-xl font-bold">Productos registrados</h2>
- <p class="mt-1 text-sm text-[#78827c]">Busca, agrega, edita o elimina productos desde un solo lugar.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Busca, agrega, edita o elimina productos desde un solo lugar.</p>
  </div>
  <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
  <UInput v-model="search" icon="i-lucide-search" placeholder="Buscar por nombre o SKU" aria-label="Buscar productos" class="w-full sm:w-80" />
@@ -147,10 +147,10 @@ async function permanentlyDeleteProduct() {
  </div>
  </div>
 
- <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-[#e1e6e2] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+ <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-[#d8e7f1] bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
  <div>
- <p class="text-sm font-semibold text-[#26322c]">Filtros de inventario</p>
- <p class="mt-1 text-xs text-[#7d8781]">Identifica rápido qué productos necesitan reposición.</p>
+ <p class="text-sm font-semibold text-[#0f172a]">Filtros de inventario</p>
+ <p class="mt-1 text-xs text-[#64748b]">Identifica rápido qué productos necesitan reposición.</p>
  </div>
  <div class="flex flex-wrap items-center gap-3">
  <USwitch
@@ -167,12 +167,12 @@ async function permanentlyDeleteProduct() {
  </div>
  </div>
 
- <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-[#e1e6e2] bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
+ <div class="mb-4 flex flex-col gap-3 rounded-2xl border border-[#d8e7f1] bg-white p-4 lg:flex-row lg:items-center lg:justify-between">
  <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
- <label class="inline-flex items-center gap-2 text-sm font-medium text-[#26322c]">
+ <label class="inline-flex items-center gap-2 text-sm font-medium text-[#0f172a]">
  <input
  type="checkbox"
- class="size-4 rounded border-[#cdd6d0] text-emerald-700 focus:ring-emerald-600"
+ class="size-4 rounded border-[#cdd6d0] text-sky-700 focus:ring-sky-600"
  :checked="allCurrentPageSelected"
  :disabled="!products.length"
  aria-label="Seleccionar productos visibles"
@@ -180,7 +180,7 @@ async function permanentlyDeleteProduct() {
  >
  Seleccionar visibles
  </label>
- <span class="text-sm text-[#7d8781]">{{ selectedProductsCount }} seleccionados</span>
+ <span class="text-sm text-[#64748b]">{{ selectedProductsCount }} seleccionados</span>
  </div>
  <div class="grid gap-2 sm:grid-cols-3">
  <UButton label="Exportar seleccionados" icon="i-lucide-list-checks" color="neutral" variant="soft" :loading="exporting" :disabled="!selectedProductsCount" @click="exportProducts('selected')" />
@@ -195,32 +195,32 @@ async function permanentlyDeleteProduct() {
  </template>
  </UAlert>
 
- <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+ <div v-if="isRefreshing" class="mb-3 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm text-slate-600" role="status" aria-live="polite">
  <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" aria-hidden="true" />
  <span>{{ debouncedSearch ? 'Buscando productos…' : 'Actualizando productos…' }}</span>
  </div>
 
  <USkeleton v-if="isInitialLoading" class="h-96 rounded-2xl" />
- <div v-else-if="!products.length" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white p-12 text-center">
- <UIcon name="i-lucide-package-search" class="mx-auto size-8 text-[#929d96]" />
+ <div v-else-if="!products.length" class="rounded-2xl border border-dashed border-[#c7dbe8] bg-white p-12 text-center">
+ <UIcon name="i-lucide-package-search" class="mx-auto size-8 text-[#94a3b8]" />
  <h3 class="mt-4 font-semibold">No hay productos que mostrar</h3>
- <p class="mx-auto mt-1 max-w-sm text-sm text-[#7d8781]">Agrega un producto o intenta con otra búsqueda.</p>
+ <p class="mx-auto mt-1 max-w-sm text-sm text-[#64748b]">Agrega un producto o intenta con otra búsqueda.</p>
  <UButton label="Agregar producto" icon="i-lucide-package-plus" class="mt-5" @click="openCreateModal" />
  </div>
 
- <div v-else class="overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
- <ul class="divide-y divide-[#edf0ed]" aria-label="Productos registrados">
+ <div v-else class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white">
+ <ul class="divide-y divide-[#d8e7f1]" aria-label="Productos registrados">
  <li v-for="product in products" :key="product.id" class="p-4 sm:px-5">
  <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
  <div class="flex min-w-0 items-start gap-3">
  <input
  type="checkbox"
- class="mt-3 size-4 shrink-0 rounded border-[#cdd6d0] text-emerald-700 focus:ring-emerald-600"
+ class="mt-3 size-4 shrink-0 rounded border-[#cdd6d0] text-sky-700 focus:ring-sky-600"
  :checked="selectedProductIds.includes(product.id)"
  :aria-label="`Seleccionar ${product.name}`"
  @change="toggleProductSelection(product.id, ($event.target as HTMLInputElement).checked)"
  >
- <span class="grid size-10 shrink-0 place-items-center rounded-xl" :class="product.active ? 'bg-[#eaf2ed] text-[#286047]' : 'bg-stone-100 text-stone-400'">
+ <span class="grid size-10 shrink-0 place-items-center rounded-xl" :class="product.active ? 'bg-[#f1f6fa] text-[#456a88]' : 'bg-stone-100 text-stone-400'">
  <UIcon name="i-lucide-package" class="size-5" aria-hidden="true" />
  </span>
  <div class="min-w-0">
@@ -230,18 +230,18 @@ async function permanentlyDeleteProduct() {
  <UBadge v-if="product.active && product.stock <= 5" label="Bajo stock" color="warning" variant="soft" size="sm" />
  <UBadge :label="product.sku" color="neutral" variant="soft" size="sm" />
  </div>
- <p class="mt-1 line-clamp-1 text-xs text-[#7d8781]">{{ product.description || 'Sin descripción' }}</p>
+ <p class="mt-1 line-clamp-1 text-xs text-[#64748b]">{{ product.description || 'Sin descripción' }}</p>
  </div>
  </div>
 
  <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[28rem] lg:items-center">
  <div>
- <p class="text-[11px] uppercase tracking-wide text-[#8b958f]">Precio</p>
- <p class="text-sm font-bold text-[#1f4937]">{{ currency.format(product.price) }} / {{ product.unit === 'KILOGRAM' ? 'kg' : 'pza' }}</p>
+ <p class="text-[11px] uppercase tracking-wide text-[#94a3b8]">Precio</p>
+ <p class="text-sm font-bold text-[#456a88]">{{ currency.format(product.price) }} / {{ product.unit === 'KILOGRAM' ? 'kg' : 'pza' }}</p>
  </div>
  <div>
- <p class="text-[11px] uppercase tracking-wide text-[#8b958f]">Existencias</p>
- <p class="text-sm font-semibold" :class="product.stock <= 5 && product.active ? 'text-amber-600' : 'text-[#536057]'">{{ product.stock }} {{ product.unit === 'KILOGRAM' ? 'kg' : 'pzas' }}</p>
+ <p class="text-[11px] uppercase tracking-wide text-[#94a3b8]">Existencias</p>
+ <p class="text-sm font-semibold" :class="product.stock <= 5 && product.active ? 'text-amber-600' : 'text-[#475569]'">{{ product.stock }} {{ product.unit === 'KILOGRAM' ? 'kg' : 'pzas' }}</p>
  </div>
  <div class="flex gap-2 sm:justify-end">
  <UButton label="Editar" icon="i-lucide-pencil" size="sm" variant="soft" @click="openEditModal(product)" />
@@ -252,8 +252,8 @@ async function permanentlyDeleteProduct() {
  </li>
  </ul>
 
- <div class="flex flex-col gap-4 border-t border-[#edf0ed] bg-[#fbfcfb] p-4 lg:flex-row lg:items-end lg:justify-between">
- <p class="text-sm text-[#7d8781]" role="status" aria-live="polite">
+ <div class="flex flex-col gap-4 border-t border-[#d8e7f1] bg-[#f7fafc] p-4 lg:flex-row lg:items-end lg:justify-between">
+ <p class="text-sm text-[#64748b]" role="status" aria-live="polite">
  Mostrando {{ pageStart }}-{{ pageEnd }} de {{ total }} productos
  </p>
  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -262,7 +262,7 @@ async function permanentlyDeleteProduct() {
  </UFormField>
  <nav class="flex items-center justify-center gap-2" aria-label="Paginación de productos">
  <UButton type="button" icon="i-lucide-chevron-left" label="Anterior" color="neutral" variant="soft" :disabled="page <= 1 || isRefreshing" @click="goToPage(page - 1)" />
- <span class="min-w-24 text-center text-sm font-semibold text-[#536057]">Página {{ page }} de {{ pageCount }}</span>
+ <span class="min-w-24 text-center text-sm font-semibold text-[#475569]">Página {{ page }} de {{ pageCount }}</span>
  <UButton type="button" trailing-icon="i-lucide-chevron-right" label="Siguiente" color="neutral" variant="soft" :disabled="page >= pageCount || isRefreshing" @click="goToPage(page + 1)" />
  </nav>
  </div>
@@ -280,8 +280,8 @@ async function permanentlyDeleteProduct() {
  <UModal v-model:open="deleteModalOpen" title="Eliminar producto" description="Esta acción borra el producto de la base de datos.">
  <template #body>
  <div class="space-y-4">
- <p class="text-sm text-[#68746d]">
- ¿Seguro que deseas eliminar permanentemente <span class="font-semibold text-[#202b25]">{{ productToDelete?.name }}</span>?
+ <p class="text-sm text-[#475569]">
+ ¿Seguro que deseas eliminar permanentemente <span class="font-semibold text-[#0f172a]">{{ productToDelete?.name }}</span>?
  </p>
  <UAlert color="error" variant="soft" icon="i-lucide-triangle-alert" title="No se puede deshacer" description="Si solo quieres ocultarlo de ventas, usa Desactivar producto desde Editar." />
  <ActionFeedback v-if="deleteError" :message="deleteError" type="error" @dismiss="deleteError = ''" />

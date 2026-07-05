@@ -160,7 +160,7 @@ async function refresh(background = false) {
  hasCachedReport.value = false
  status.value = 'success'
  } catch (err: unknown) {
- error.value = err instanceof Error ? err.message : 'No pudimos cargar el reporte.'
+ error.value = getErrorMessage(err, 'No pudimos cargar el reporte.')
  status.value = 'error'
  }
 }
@@ -169,8 +169,8 @@ const isLoading = computed(() => status.value === 'pending' && !data.value.items
 const isRefreshing = computed(() => status.value === 'pending' && data.value.items.length > 0 && !hasCachedReport.value)
 const chartItems = computed(() => fillChartPeriods())
 const salesChartSeries = [
- { key: 'cashTotal', label: 'Efectivo', color: 'bg-emerald-600', textColor: 'text-emerald-700' },
- { key: 'cardTotal', label: 'Tarjeta', color: 'bg-[#233071]', textColor: 'text-[#233071]' },
+ { key: 'cashTotal', label: 'Efectivo', color: 'bg-sky-600', textColor: 'text-sky-700' },
+ { key: 'cardTotal', label: 'Tarjeta', color: 'bg-[#385872]', textColor: 'text-[#385872]' },
  { key: 'creditPendingTotal', label: 'Fiado pendiente', color: 'bg-amber-500', textColor: 'text-amber-700' },
  { key: 'creditPaidTotal', label: 'Fiado pagado', color: 'bg-teal-500', textColor: 'text-teal-700' }
 ] as const
@@ -287,7 +287,7 @@ function chartBarHeight(total: number) {
  <div class="mb-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
  <div>
  <h2 class="text-xl font-bold">Métricas de ventas</h2>
- <p class="mt-1 text-sm text-[#78827c]">Analiza cómo nacieron las ventas: efectivo, tarjeta, transferencia y fiado.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Analiza cómo nacieron las ventas: efectivo, tarjeta, transferencia y fiado.</p>
  </div>
  <div class="flex flex-wrap gap-2">
  <UButton to="/dashboard/reports/creditCollections" label="Ver cobros de fiado" icon="i-lucide-hand-coins" color="neutral" variant="soft" />
@@ -333,16 +333,16 @@ function chartBarHeight(total: number) {
  <template v-else>
  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#78827c]">Venta total</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#1f4937]">{{ currency.format(data.summary.grossTotal) }}</p>
+ <p class="text-sm text-[#64748b]">Venta total</p>
+ <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#456a88]">{{ currency.format(data.summary.grossTotal) }}</p>
  </UCard>
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#78827c]">Tickets vendidos</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#233071]">{{ numberFormat.format(data.summary.salesCount) }}</p>
+ <p class="text-sm text-[#64748b]">Tickets vendidos</p>
+ <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#385872]">{{ numberFormat.format(data.summary.salesCount) }}</p>
  </UCard>
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#78827c]">Ticket promedio</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#1f4937]">{{ currency.format(data.summary.averageTicket) }}</p>
+ <p class="text-sm text-[#64748b]">Ticket promedio</p>
+ <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#456a88]">{{ currency.format(data.summary.averageTicket) }}</p>
  </UCard>
  <UCard :ui="{ root: 'rounded-2xl ring-red-100 bg-red-50/60', body: 'p-5' }">
  <p class="text-sm text-red-800">Cancelados</p>
@@ -363,25 +363,25 @@ function chartBarHeight(total: number) {
  <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
  <div>
  <h3 class="font-bold">Gráfica de ventas originadas</h3>
- <p class="text-sm text-[#78827c]">{{ data.startDate }} al {{ data.endDate }}</p>
+ <p class="text-sm text-[#64748b]">{{ data.startDate }} al {{ data.endDate }}</p>
  </div>
  <UBadge :label="groupOptions.find(option => option.value === groupBy)?.label" color="primary" variant="soft" />
  </div>
  </template>
 
  <div v-if="!data.summary.grossTotal" class="p-10 text-center">
- <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-9 text-[#9aa49e]" aria-hidden="true" />
+ <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-9 text-[#94a3b8]" aria-hidden="true" />
  <h4 class="mt-3 font-bold">No hay ventas en este rango</h4>
- <p class="mt-1 text-sm text-[#78827c]">Cambia las fechas o vuelve cuando existan ventas registradas.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Cambia las fechas o vuelve cuando existan ventas registradas.</p>
  </div>
 
  <div v-else class="overflow-x-auto">
  <div class="min-w-[42rem]">
  <div class="mb-3">
- <h4 class="font-semibold text-[#26322c]">Ventas originadas</h4>
- <p class="text-xs text-[#78827c]">Clasifica la venta según cómo nació el ticket. El fiado pagado sigue siendo una venta fiada, pero ya no está pendiente.</p>
+ <h4 class="font-semibold text-[#0f172a]">Ventas originadas</h4>
+ <p class="text-xs text-[#64748b]">Clasifica la venta según cómo nació el ticket. El fiado pagado sigue siendo una venta fiada, pero ya no está pendiente.</p>
  </div>
- <div class="mb-3 flex items-center justify-between text-xs text-[#7d8781]">
+ <div class="mb-3 flex items-center justify-between text-xs text-[#64748b]">
  <div class="flex flex-wrap items-center gap-3">
  <span
  v-for="series in salesChartSeries"
@@ -395,14 +395,14 @@ function chartBarHeight(total: number) {
  </div>
  <span>Máximo: {{ currency.format(maxPeriodTotal) }}</span>
  </div>
- <div class="flex h-72 items-end gap-3 border-b border-l border-[#dce3dd] px-3 pt-4" aria-label="Gráfica de barras de ventas por periodo y forma de pago">
+ <div class="flex h-72 items-end gap-3 border-b border-l border-[#c7dbe8] px-3 pt-4" aria-label="Gráfica de barras de ventas por periodo y forma de pago">
  <div
  v-for="item in chartItems"
  :key="item.period"
  class="flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
  :title="`${formatPeriod(item.period)} · Efectivo ${currency.format(item.cashTotal)} · Tarjeta ${currency.format(item.cardTotal)} · Fiado pendiente ${currency.format(item.creditPendingTotal)} · Fiado pagado ${currency.format(item.creditPaidTotal)}`"
  >
- <span class="max-w-24 truncate text-xs font-semibold text-[#1f4937]">{{ item.grossTotal ? currency.format(item.grossTotal) : '' }}</span>
+ <span class="max-w-24 truncate text-xs font-semibold text-[#456a88]">{{ item.grossTotal ? currency.format(item.grossTotal) : '' }}</span>
  <div class="flex h-56 w-full items-end justify-center gap-1.5">
  <div
  v-for="series in salesChartSeries"
@@ -414,7 +414,7 @@ function chartBarHeight(total: number) {
  :aria-label="`${formatPeriod(item.period)} · ${series.label}: ${currency.format(item[series.key])}`"
  />
  </div>
- <span class="w-full truncate text-center text-xs font-medium capitalize text-[#68746d]">{{ formatXAxisLabel(item.period) }}</span>
+ <span class="w-full truncate text-center text-xs font-medium capitalize text-[#475569]">{{ formatXAxisLabel(item.period) }}</span>
  </div>
  </div>
  </div>

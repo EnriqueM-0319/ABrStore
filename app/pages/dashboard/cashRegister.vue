@@ -38,9 +38,9 @@ function sectionTo(section: CashRegisterSection) {
 
 <template>
  <DashboardShell eyebrow="Caja" :title="currentTitle">
- <div class="border-b border-[#dde3de] bg-white/70 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
+ <div class="border-b border-[#dde3de] bg-white/70 px-4 py-4 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 sm:px-6 lg:px-8">
  <div class="mx-auto flex max-w-[1500px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
- <p class="text-sm text-[#78827c]">{{ currentDescription }}</p>
+ <p class="text-sm text-[#64748b] dark:text-slate-300">{{ currentDescription }}</p>
  <nav class="flex flex-wrap gap-2" aria-label="Secciones de caja">
  <UButton
  v-for="option in sectionOptions"

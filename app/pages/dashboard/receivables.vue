@@ -7,6 +7,8 @@ useHead({ title: 'Cuentas por cobrar' })
 const page = ref(1)
 const limit = ref(10)
 const statusFilter = ref<'pending' | 'paid' | 'all'>('pending')
+const customerSearch = ref('')
+const debouncedCustomerSearch = ref('')
 const selectedSale = ref<SaleTicket | null>(null)
 const payModalOpen = ref(false)
 const paying = ref(false)
@@ -37,7 +39,7 @@ const data = ref<SalesHistoryResponse>({ items: [], total: 0, page: 1, limit: 10
 const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
 const error = ref('')
 const hasCachedPage = ref(false)
-const cacheKey = computed(() => `abr_receivables_${statusFilter.value}_${page.value}_${limit.value}`)
+const cacheKey = computed(() => `abr_receivables_${statusFilter.value}_${page.value}_${limit.value}_${debouncedCustomerSearch.value}`)
 
 const isLoading = computed(() => status.value === 'pending' && !data.value.items.length)
 const isRefreshing = computed(() => status.value === 'pending' && data.value.items.length > 0 && !hasCachedPage.value)
@@ -52,8 +54,15 @@ const cashReceivedAmount = computed(() => Number(cashReceived.value))
 const cashReceivedIsInsufficient = computed(() => paymentMethod.value === 'CASH' && (!Number.isFinite(cashReceivedAmount.value) || cashReceivedAmount.value < payableTotal.value))
 const changeDue = computed(() => paymentMethod.value === 'CASH' && Number.isFinite(cashReceivedAmount.value) ? Math.max(cashReceivedAmount.value - payableTotal.value, 0) : 0)
 
-watch([statusFilter, limit], () => {
+watch([statusFilter, limit, debouncedCustomerSearch], () => {
  page.value = 1
+})
+
+watch(customerSearch, (value) => {
+ const trimmedValue = value.trim()
+ window.setTimeout(() => {
+ if (customerSearch.value.trim() === trimmedValue) debouncedCustomerSearch.value = trimmedValue
+ }, 300)
 })
 
 function readCachedReceivables() {
@@ -91,7 +100,8 @@ async function refresh() {
  query: {
  page: page.value,
  limit: limit.value,
- status: statusFilter.value
+ status: statusFilter.value,
+ search: debouncedCustomerSearch.value || undefined
  }
  })
  data.value = nextData
@@ -109,7 +119,7 @@ onMounted(() => {
  void refresh()
 })
 
-watch([page, limit, statusFilter], () => {
+watch([page, limit, statusFilter, debouncedCustomerSearch], () => {
  readCachedReceivables()
  void refresh()
 })
@@ -192,9 +202,18 @@ watch(paymentMethod, (method) => {
  <div class="mb-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
  <div>
  <h2 class="text-xl font-bold">Ventas fiadas</h2>
- <p class="mt-1 text-sm text-[#78827c]">Consulta ventas pendientes de pago y márcalas como pagadas cuando el cliente liquide.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Consulta ventas pendientes de pago y márcalas como pagadas cuando el cliente liquide.</p>
  </div>
- <div class="grid gap-3">
+ <div class="grid gap-3 sm:grid-cols-[minmax(16rem,1fr)_11rem] sm:items-end">
+ <UFormField label="Buscar cliente">
+ <UInput
+ v-model="customerSearch"
+ icon="i-lucide-search"
+ placeholder="Nombre del cliente"
+ class="w-full"
+ aria-label="Buscar cuenta por nombre del cliente"
+ />
+ </UFormField>
  <UFormField label="Estado">
  <USelect v-model="statusFilter" :items="statusOptions" value-key="value" label-key="label" class="w-full sm:w-44" />
  </UFormField>
@@ -219,16 +238,16 @@ watch(paymentMethod, (method) => {
 
  <div class="mb-4 grid gap-4 md:grid-cols-3">
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#78827c]">Registros encontrados</p>
- <p class="mt-2 text-3xl font-black text-[#1f4937]">{{ data.total }}</p>
+ <p class="text-sm text-[#64748b]">Registros encontrados</p>
+ <p class="mt-2 text-3xl font-black text-[#456a88]">{{ data.total }}</p>
  </UCard>
  <UCard :ui="{ root: 'rounded-2xl ring-amber-200 bg-amber-50/70', body: 'p-5' }">
  <p class="text-sm text-amber-800">Pendiente visible</p>
  <p class="mt-2 text-3xl font-black text-amber-950">{{ currency.format(pendingTotal) }}</p>
  </UCard>
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#78827c]">Página</p>
- <p class="mt-2 text-3xl font-black text-[#1f4937]">{{ data.page }} / {{ data.pageCount }}</p>
+ <p class="text-sm text-[#64748b]">Página</p>
+ <p class="mt-2 text-3xl font-black text-[#456a88]">{{ data.page }} / {{ data.pageCount }}</p>
  </UCard>
  </div>
 
@@ -236,14 +255,14 @@ watch(paymentMethod, (method) => {
  <USkeleton v-for="item in 5" :key="item" class="h-24 rounded-2xl" />
  </div>
 
- <div v-else-if="!data.items.length" class="rounded-2xl border border-dashed border-[#d8ddd9] bg-white p-10 text-center">
- <UIcon name="i-lucide-hand-coins" class="mx-auto size-9 text-[#9aa49e]" aria-hidden="true" />
+ <div v-else-if="!data.items.length" class="rounded-2xl border border-dashed border-[#c7dbe8] bg-white p-10 text-center">
+ <UIcon name="i-lucide-hand-coins" class="mx-auto size-9 text-[#94a3b8]" aria-hidden="true" />
  <h3 class="mt-3 font-bold">No hay cuentas por cobrar</h3>
- <p class="mt-1 text-sm text-[#78827c]">Cuando cobres una venta como fiado aparecerá en este apartado.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Cuando cobres una venta como fiado aparecerá en este apartado.</p>
  </div>
 
- <div v-else class="overflow-hidden rounded-2xl border border-[#dfe5e0] bg-white">
- <ul class="divide-y divide-[#edf0ed]" aria-label="Lista de cuentas por cobrar">
+ <div v-else class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white">
+ <ul class="divide-y divide-[#d8e7f1]" aria-label="Lista de cuentas por cobrar">
  <li v-for="sale in data.items" :key="sale.id" class="grid gap-4 p-4 lg:grid-cols-[1fr_auto] lg:items-center">
  <div class="min-w-0">
  <div class="flex flex-wrap items-center gap-2">
@@ -251,17 +270,17 @@ watch(paymentMethod, (method) => {
  <UBadge :label="sale.creditPaidAt ? 'Pagada' : 'Pendiente'" :color="sale.creditPaidAt ? 'success' : 'warning'" variant="soft" />
  <UBadge :label="paymentLabel(sale.creditPaymentMethod || sale.paymentMethod)" color="neutral" variant="soft" />
  </div>
- <p class="mt-1 text-base font-semibold text-[#1f4937]">{{ sale.creditCustomerName || 'Cliente sin nombre' }}</p>
- <p class="mt-1 text-sm text-[#78827c]">
+ <p class="mt-1 text-base font-semibold text-[#456a88]">{{ sale.creditCustomerName || 'Cliente sin nombre' }}</p>
+ <p class="mt-1 text-sm text-[#64748b]">
  {{ dateTime.format(new Date(sale.createdAt)) }} · Vendió {{ sale.seller.fullName }} · {{ sale.itemCount }} artículos
  </p>
- <p v-if="sale.creditNote" class="mt-1 text-sm text-[#68746d]">{{ sale.creditNote }}</p>
- <p v-if="sale.creditPaidAt" class="mt-1 text-xs text-emerald-700">
+ <p v-if="sale.creditNote" class="mt-1 text-sm text-[#475569]">{{ sale.creditNote }}</p>
+ <p v-if="sale.creditPaidAt" class="mt-1 text-xs text-sky-700">
  Pagada el {{ dateTime.format(new Date(sale.creditPaidAt)) }} por {{ sale.creditPaidBy?.fullName || 'usuario del sistema' }}.
  </p>
  </div>
  <div class="flex flex-wrap items-center justify-between gap-3 lg:justify-end">
- <p class="text-right text-2xl font-black tracking-[-.04em] text-[#233071]">{{ currency.format(sale.paymentTotal) }}</p>
+ <p class="text-right text-2xl font-black tracking-[-.04em] text-[#385872]">{{ currency.format(sale.paymentTotal) }}</p>
  <UButton
  v-if="!sale.creditPaidAt"
  label="Marcar pagada"
@@ -274,8 +293,8 @@ watch(paymentMethod, (method) => {
  </ul>
  </div>
 
- <div v-if="!isLoading && data.total" class="mt-5 flex flex-col gap-4 rounded-2xl border border-[#edf0ed] bg-white p-4 lg:flex-row lg:items-end lg:justify-between">
- <p class="text-sm text-[#7d8781]" role="status" aria-live="polite">
+ <div v-if="!isLoading && data.total" class="mt-5 flex flex-col gap-4 rounded-2xl border border-[#d8e7f1] bg-white p-4 lg:flex-row lg:items-end lg:justify-between">
+ <p class="text-sm text-[#64748b]" role="status" aria-live="polite">
  Mostrando {{ pageStart }}-{{ pageEnd }} de {{ data.total }} cuentas
  </p>
  <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
@@ -284,7 +303,7 @@ watch(paymentMethod, (method) => {
  </UFormField>
  <nav class="flex items-center justify-center gap-2" aria-label="Paginación de cuentas por cobrar">
  <UButton type="button" icon="i-lucide-chevron-left" label="Anterior" color="neutral" variant="soft" :disabled="page <= 1 || isRefreshing" @click="goToPage(page - 1)" />
- <span class="min-w-24 text-center text-sm font-semibold text-[#536057]">Página {{ page }} de {{ data.pageCount }}</span>
+ <span class="min-w-24 text-center text-sm font-semibold text-[#475569]">Página {{ page }} de {{ data.pageCount }}</span>
  <UButton type="button" trailing-icon="i-lucide-chevron-right" label="Siguiente" color="neutral" variant="soft" :disabled="page >= data.pageCount || isRefreshing" @click="goToPage(page + 1)" />
  </nav>
  </div>
@@ -293,12 +312,12 @@ watch(paymentMethod, (method) => {
  <UModal v-model:open="payModalOpen" title="Marcar cuenta como pagada" description="Selecciona cómo liquidó el cliente esta venta fiada.">
  <template #body>
  <div v-if="selectedSale" class="space-y-4">
- <div class="rounded-2xl bg-[#f7faf8] p-4">
- <p class="text-sm text-[#78827c]">Ticket #{{ selectedSale.folio }}</p>
- <p class="mt-1 font-bold text-[#1f4937]">{{ selectedSale.creditCustomerName || 'Cliente sin nombre' }}</p>
- <p v-if="selectedSale.creditNote" class="mt-1 text-sm text-[#68746d]">{{ selectedSale.creditNote }}</p>
- <p class="mt-1 text-3xl font-black text-[#233071]">{{ currency.format(payableTotal) }}</p>
- <p v-if="shouldRoundPaymentMethod(paymentMethod) && payableTotal !== selectedPaymentTotal" class="mt-1 text-xs text-[#68746d]">
+ <div class="rounded-2xl bg-[#f7fafc] p-4">
+ <p class="text-sm text-[#64748b]">Ticket #{{ selectedSale.folio }}</p>
+ <p class="mt-1 font-bold text-[#456a88]">{{ selectedSale.creditCustomerName || 'Cliente sin nombre' }}</p>
+ <p v-if="selectedSale.creditNote" class="mt-1 text-sm text-[#475569]">{{ selectedSale.creditNote }}</p>
+ <p class="mt-1 text-3xl font-black text-[#385872]">{{ currency.format(payableTotal) }}</p>
+ <p v-if="shouldRoundPaymentMethod(paymentMethod) && payableTotal !== selectedPaymentTotal" class="mt-1 text-xs text-[#475569]">
  Subtotal {{ currency.format(selectedPaymentTotal) }} · ajuste por redondeo {{ currency.format(payableTotal - selectedPaymentTotal) }}
  </p>
  </div>
@@ -319,9 +338,9 @@ watch(paymentMethod, (method) => {
  />
  </UFormField>
  <div class="grid gap-2 sm:grid-cols-2">
- <div class="rounded-xl border border-emerald-100 bg-emerald-50/80 p-3">
- <p class="text-xs font-semibold uppercase tracking-wide text-emerald-800">Total a cobrar</p>
- <p class="mt-1 text-xl font-black text-emerald-950">{{ currency.format(payableTotal) }}</p>
+ <div class="rounded-xl border border-sky-100 bg-sky-50/80 p-3">
+ <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Total a cobrar</p>
+ <p class="mt-1 text-xl font-black text-slate-800">{{ currency.format(payableTotal) }}</p>
  </div>
  <div class="rounded-xl border border-orange-100 bg-orange-50/80 p-3">
  <p class="text-xs font-semibold uppercase tracking-wide text-orange-800">Cambio</p>

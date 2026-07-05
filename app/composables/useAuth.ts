@@ -1,11 +1,11 @@
-import type { AuthUser, UserRole } from '~/types'
+import type { SessionUser, UserRole } from '~/types'
 
 export function useAuth() {
- const user = useState<AuthUser | null>('auth-user', () => null)
+ const user = useState<SessionUser | null>('auth-user', () => null)
 
  async function loadUser() {
  const requestFetch = useRequestFetch()
- user.value = await requestFetch<AuthUser>('/api/auth/me')
+ user.value = await requestFetch<SessionUser | null>('/api/auth/me')
  return user.value
  }
 

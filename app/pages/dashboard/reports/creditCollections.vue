@@ -159,7 +159,7 @@ async function refresh(background = false) {
  hasCachedReport.value = false
  status.value = 'success'
  } catch (err: unknown) {
- error.value = err instanceof Error ? err.message : 'No pudimos cargar el reporte.'
+ error.value = getErrorMessage(err, 'No pudimos cargar el reporte.')
  status.value = 'error'
  }
 }
@@ -168,8 +168,8 @@ const isLoading = computed(() => status.value === 'pending' && !data.value.items
 const isRefreshing = computed(() => status.value === 'pending' && data.value.items.length > 0 && !hasCachedReport.value)
 const chartItems = computed(() => fillChartPeriods())
 const collectionChartSeries = [
- { key: 'creditCollectedCashTotal', label: 'Cobro efectivo', color: 'bg-emerald-600', textColor: 'text-emerald-700' },
- { key: 'creditCollectedCardTotal', label: 'Cobro tarjeta', color: 'bg-[#233071]', textColor: 'text-[#233071]' },
+ { key: 'creditCollectedCashTotal', label: 'Cobro efectivo', color: 'bg-sky-600', textColor: 'text-sky-700' },
+ { key: 'creditCollectedCardTotal', label: 'Cobro tarjeta', color: 'bg-[#385872]', textColor: 'text-[#385872]' },
  { key: 'creditCollectedTransferTotal', label: 'Cobro transferencia', color: 'bg-sky-500', textColor: 'text-sky-700' }
 ] as const
 const maxCollectionTotal = computed(() => Math.max(
@@ -284,7 +284,7 @@ function collectionBarHeight(total: number) {
  <div class="mb-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
  <div>
  <h2 class="text-xl font-bold">Cobros de cuentas fiadas</h2>
- <p class="mt-1 text-sm text-[#78827c]">Analiza cuándo entró realmente el dinero de cuentas por cobrar, separado por forma de pago.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Analiza cuándo entró realmente el dinero de cuentas por cobrar, separado por forma de pago.</p>
  </div>
  <div class="flex flex-wrap gap-2">
  <UButton to="/dashboard/reports/sales" label="Ver ventas originadas" icon="i-lucide-chart-column" color="neutral" variant="soft" />
@@ -340,25 +340,25 @@ function collectionBarHeight(total: number) {
  <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
  <div>
  <h3 class="font-bold">Gráfica de cobros de fiado</h3>
- <p class="text-sm text-[#78827c]">{{ data.startDate }} al {{ data.endDate }}</p>
+ <p class="text-sm text-[#64748b]">{{ data.startDate }} al {{ data.endDate }}</p>
  </div>
  <UBadge :label="groupOptions.find(option => option.value === groupBy)?.label" color="primary" variant="soft" />
  </div>
  </template>
 
  <div v-if="!data.summary.creditCollectedTotal" class="p-10 text-center">
- <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-9 text-[#9aa49e]" aria-hidden="true" />
+ <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-9 text-[#94a3b8]" aria-hidden="true" />
  <h4 class="mt-3 font-bold">No hay cobros de fiado en este rango</h4>
- <p class="mt-1 text-sm text-[#78827c]">Cambia las fechas o vuelve cuando existan cuentas liquidadas.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Cambia las fechas o vuelve cuando existan cuentas liquidadas.</p>
  </div>
 
  <div v-else class="overflow-x-auto">
  <div class="min-w-[42rem]">
  <div class="mb-3">
- <h4 class="font-semibold text-[#26322c]">Cobros de fiado</h4>
- <p class="text-xs text-[#78827c]">Muestra cuándo entró realmente el dinero de cuentas fiadas, separado por forma de cobro.</p>
+ <h4 class="font-semibold text-[#0f172a]">Cobros de fiado</h4>
+ <p class="text-xs text-[#64748b]">Muestra cuándo entró realmente el dinero de cuentas fiadas, separado por forma de cobro.</p>
  </div>
- <div class="mb-3 flex items-center justify-between text-xs text-[#7d8781]">
+ <div class="mb-3 flex items-center justify-between text-xs text-[#64748b]">
  <div class="flex flex-wrap items-center gap-3">
  <span
  v-for="series in collectionChartSeries"
@@ -372,14 +372,14 @@ function collectionBarHeight(total: number) {
  </div>
  <span>Máximo: {{ currency.format(maxCollectionTotal) }}</span>
  </div>
- <div class="flex h-72 items-end gap-3 border-b border-l border-[#dce3dd] px-3 pt-4" aria-label="Gráfica de barras de cobros de fiado por periodo y forma de pago">
+ <div class="flex h-72 items-end gap-3 border-b border-l border-[#c7dbe8] px-3 pt-4" aria-label="Gráfica de barras de cobros de fiado por periodo y forma de pago">
  <div
  v-for="item in chartItems"
  :key="item.period"
  class="flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
  :title="`${formatPeriod(item.period)} · Cobro efectivo ${currency.format(item.creditCollectedCashTotal)} · Cobro tarjeta ${currency.format(item.creditCollectedCardTotal)} · Cobro transferencia ${currency.format(item.creditCollectedTransferTotal)}`"
  >
- <span class="max-w-24 truncate text-xs font-semibold text-[#1f4937]">{{ item.creditCollectedTotal ? currency.format(item.creditCollectedTotal) : '' }}</span>
+ <span class="max-w-24 truncate text-xs font-semibold text-[#456a88]">{{ item.creditCollectedTotal ? currency.format(item.creditCollectedTotal) : '' }}</span>
  <div class="flex h-56 w-full items-end justify-center gap-1.5">
  <div
  v-for="series in collectionChartSeries"
@@ -391,10 +391,10 @@ function collectionBarHeight(total: number) {
  :aria-label="`${formatPeriod(item.period)} · ${series.label}: ${currency.format(item[series.key])}`"
  />
  </div>
- <span class="w-full truncate text-center text-xs font-medium capitalize text-[#68746d]">{{ formatXAxisLabel(item.period) }}</span>
+ <span class="w-full truncate text-center text-xs font-medium capitalize text-[#475569]">{{ formatXAxisLabel(item.period) }}</span>
  </div>
  </div>
- <div class="mt-2 text-center text-xs font-semibold uppercase tracking-[.14em] text-[#8b958f]">
+ <div class="mt-2 text-center text-xs font-semibold uppercase tracking-[.14em] text-[#94a3b8]">
  {{ groupBy === 'day' ? 'Días de la semana' : groupBy === 'month' ? 'Meses' : 'Años' }}
  </div>
  </div>

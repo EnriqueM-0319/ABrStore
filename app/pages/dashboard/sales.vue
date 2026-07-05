@@ -479,7 +479,7 @@ async function holdCurrentTicket() {
  ref="productSearchInput"
  v-model="search" icon="i-lucide-search" size="lg" color="neutral" variant="outline"
  placeholder="Escanea o escribe un producto…" aria-label="Escanear o buscar productos" autocomplete="off" class="w-full"
- :ui="{ base: 'rounded-xl bg-white' }"
+ :ui="{ base: 'rounded-xl bg-white text-slate-950 dark:bg-slate-800 dark:text-slate-100' }"
  :loading="scanningProduct"
  @keydown.enter.prevent="addScannedProduct"
  @blur="keepScannerFocus"
@@ -491,11 +491,11 @@ async function holdCurrentTicket() {
 
  <div
  v-if="debouncedSearch || isInitialSearchLoading || isSearching || error"
- class="absolute left-0 right-0 top-full mt-2 max-h-[18rem] overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-[#d8ddd9]"
+ class="absolute left-0 right-0 top-full mt-2 max-h-[18rem] overflow-y-auto rounded-2xl bg-white text-slate-950 shadow-2xl ring-1 ring-[#c7dbe8] dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-600"
  aria-live="polite"
  :aria-busy="isInitialSearchLoading || isSearching"
  >
- <div v-if="isSearching" class="m-2 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs text-emerald-800" role="status" aria-live="polite">
+ <div v-if="isSearching" class="m-2 flex items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200" role="status" aria-live="polite">
  <UIcon name="i-lucide-loader-circle" class="size-4 animate-spin" aria-hidden="true" />
  <span>Buscando productos…</span>
  </div>
@@ -506,28 +506,28 @@ async function holdCurrentTicket() {
  <template #actions><UButton label="Reintentar" color="error" variant="soft" size="sm" @click="refresh()" /></template>
  </UAlert>
  <div v-else-if="!products.length" class="px-5 py-8 text-center">
- <span class="mx-auto grid size-10 place-items-center rounded-xl bg-[#eef2ef] text-[#68766e]"><UIcon name="i-lucide-package-search" class="size-5" aria-hidden="true" /></span>
+ <span class="mx-auto grid size-10 place-items-center rounded-xl bg-[#eef2ef] text-[#68766e] dark:bg-slate-700 dark:text-slate-300"><UIcon name="i-lucide-package-search" class="size-5" aria-hidden="true" /></span>
  <h3 class="mt-3 text-sm font-semibold">No encontramos coincidencias</h3>
- <p class="mx-auto mt-1 max-w-sm text-xs text-[#7d8781]">Prueba con otro nombre o SKU.</p>
+ <p class="mx-auto mt-1 max-w-sm text-xs text-[#64748b] dark:text-slate-300">Prueba con otro nombre o SKU.</p>
  </div>
- <ul v-else class="divide-y divide-[#edf0ed]" aria-label="Resultados de búsqueda de productos">
+ <ul v-else class="divide-y divide-[#d8e7f1] dark:divide-slate-600" aria-label="Resultados de búsqueda de productos">
  <li v-for="product in products" :key="product.id">
  <button
  type="button"
- class="flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-[#f7f9f7] focus-visible:bg-[#f2f6f3]"
+ class="flex w-full items-center gap-3 px-3 py-2 text-left transition hover:bg-[#f1f6fa] focus-visible:bg-[#d8e7f1] dark:hover:bg-slate-700 dark:focus-visible:bg-slate-700"
  :aria-label="`Agregar ${product.name} a la venta`"
  @click="addProduct(product)"
  >
- <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-[#eaf2ed] text-[#286047]">
+ <span class="grid size-8 shrink-0 place-items-center rounded-lg bg-[#f1f6fa] text-[#456a88] dark:bg-slate-700 dark:text-[#c8d6df]">
  <UIcon name="i-lucide-package-plus" class="size-4" aria-hidden="true" />
  </span>
  <span class="min-w-0 flex-1">
- <span class="block truncate text-sm font-semibold">{{ product.name }}</span>
- <span class="mt-1 block truncate text-xs text-[#7d8781]">{{ product.sku }} · {{ product.stock }} {{ product.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} disponibles</span>
+ <span class="block truncate text-sm font-semibold text-slate-950 dark:text-slate-100">{{ product.name }}</span>
+ <span class="mt-1 block truncate text-xs text-[#64748b] dark:text-slate-300">{{ product.sku }} · {{ product.stock }} {{ product.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} disponibles</span>
  </span>
  <span class="shrink-0 text-right">
- <span class="block text-sm font-bold text-[#1f4937]">{{ currency.format(product.price) }}</span>
- <span class="mt-1 block text-[11px] text-[#7d8781]">{{ product.unit === 'KILOGRAM' ? 'por kg' : 'por pza' }}</span>
+ <span class="block text-sm font-bold text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(product.price) }}</span>
+ <span class="mt-1 block text-[11px] text-[#64748b] dark:text-slate-300">{{ product.unit === 'KILOGRAM' ? 'por kg' : 'por pza' }}</span>
  </span>
  </button>
  </li>
@@ -540,7 +540,7 @@ async function holdCurrentTicket() {
  <div class="flex items-center justify-between gap-4">
  <div>
  <h2 id="sale-detail-title" class="text-sm font-bold">Detalle de venta</h2>
- <p class="text-xs text-[#7a847e]">{{ itemCount }} {{ itemCount === 1 ? 'artículo' : 'artículos' }}</p>
+ <p class="text-xs text-[#64748b] dark:text-slate-300">{{ itemCount }} {{ itemCount === 1 ? 'artículo' : 'artículos' }}</p>
  </div>
  <div class="flex items-center gap-1.5">
  <UButton label="Venta sin código" icon="i-lucide-badge-plus" color="primary" variant="soft" size="xs" @click="manualProductOpen = true" />
@@ -552,11 +552,11 @@ async function holdCurrentTicket() {
  <div v-if="!cart.length" class="px-6 py-14 text-center">
  <UIcon name="i-lucide-shopping-basket" class="mx-auto size-8 text-[#a0aaa4]" aria-hidden="true" />
  <p class="mt-3 text-sm font-semibold">Tu venta está vacía</p>
- <p class="mt-1 text-sm text-[#89928d]">Escanea o busca productos para agregarlos al ticket.</p>
+ <p class="mt-1 text-sm text-[#64748b] dark:text-slate-300">Escanea o busca productos para agregarlos al ticket.</p>
  </div>
  <div v-else>
  <div class="w-full overflow-hidden">
- <div class="grid grid-cols-[3.75rem_minmax(0,1fr)_4.25rem_6rem_5.25rem_2rem] gap-1.5 border-b border-[#d7ddd8] bg-[#f0f5f2] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#5d6a62] 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem_2.25rem]">
+ <div class="grid grid-cols-[3.75rem_minmax(0,1fr)_4.25rem_6rem_5.25rem_2rem] gap-1.5 border-b border-[#d7ddd8] bg-[#f0f5f2] px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-[#5d6a62] dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem_2.25rem]">
  <span>Código</span>
  <span>Producto</span>
  <span class="text-right">Precio</span>
@@ -564,20 +564,20 @@ async function holdCurrentTicket() {
  <span class="text-right">Importe</span>
  <span class="sr-only">Quitar</span>
  </div>
- <ul class="max-h-[calc(100vh-12.5rem)] divide-y divide-[#e7ece8] overflow-y-auto" aria-label="Productos en la venta">
+ <ul class="max-h-[calc(100vh-12.5rem)] divide-y divide-[#e7ece8] overflow-y-auto dark:divide-slate-600" aria-label="Productos en la venta">
  <li
  v-for="item in cart"
  :key="item.id"
- class="grid grid-cols-[3.75rem_minmax(0,1fr)_4.25rem_6rem_5.25rem_2rem] items-center gap-1.5 px-2.5 py-1.5 text-xs odd:bg-white even:bg-[#f8fbf9] 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem_2.25rem]"
+ class="grid grid-cols-[3.75rem_minmax(0,1fr)_4.25rem_6rem_5.25rem_2rem] items-center gap-1.5 px-2.5 py-1.5 text-xs odd:bg-white even:bg-[#f8fbf9] dark:odd:bg-slate-800 dark:even:bg-slate-700 2xl:grid-cols-[5rem_minmax(0,1fr)_5rem_6.75rem_6rem_2.25rem]"
  >
- <span class="truncate text-xs text-[#617068]">{{ item.sku }}</span>
+ <span class="truncate text-xs text-[#617068] dark:text-slate-300">{{ item.sku }}</span>
  <span class="min-w-0">
- <span class="block truncate font-semibold leading-tight text-[#202b25]">{{ item.name }}</span>
- <span class="block truncate text-[10px] leading-tight text-[#7d8781]">
+ <span class="block truncate font-semibold leading-tight text-[#0f172a] dark:text-slate-100">{{ item.name }}</span>
+ <span class="block truncate text-[10px] leading-tight text-[#64748b] dark:text-slate-300">
  {{ item.description || 'Sin descripción' }} · {{ item.isManual ? 'No afecta inventario' : `Exist. ${item.stock} ${item.unit === 'KILOGRAM' ? 'kg' : 'pzas'}` }}
  </span>
  </span>
- <span class="text-right text-[11px] font-semibold text-[#536057]">{{ currency.format(item.price) }}</span>
+ <span class="text-right text-[11px] font-semibold text-[#475569] dark:text-slate-200">{{ currency.format(item.price) }}</span>
  <span class="flex items-center justify-center gap-0.5">
  <UButton v-if="item.unit === 'PIECE' && !item.isManual" icon="i-lucide-minus" color="neutral" variant="ghost" size="xs" :aria-label="`Quitar cantidad de ${item.name}`" @click="setQuantity(item, item.quantity - getQuantityStep(item))" />
  <UBadge v-if="item.isManual" label="Manual" color="neutral" variant="soft" size="sm" />
@@ -600,8 +600,8 @@ async function holdCurrentTicket() {
  <UButton v-if="!item.isManual && item.unit === 'PIECE'" icon="i-lucide-plus" color="neutral" variant="ghost" size="xs" :disabled="item.quantity >= item.stock" :aria-label="`Agregar cantidad de ${item.name}`" @click="setQuantity(item, item.quantity + getQuantityStep(item))" />
  </span>
  <span class="text-right">
- <span class="block text-xs font-bold text-emerald-700">{{ currency.format(item.price * item.quantity) }}</span>
- <span v-if="item.unit === 'KILOGRAM' && item.quantity > 0" class="block text-[10px] leading-tight text-[#7d8781]">{{ item.quantity }} kg</span>
+ <span class="block text-xs font-bold text-sky-700 dark:text-[#c8d6df]">{{ currency.format(item.price * item.quantity) }}</span>
+ <span v-if="item.unit === 'KILOGRAM' && item.quantity > 0" class="block text-[10px] leading-tight text-[#64748b] dark:text-slate-300">{{ item.quantity }} kg</span>
  </span>
  <UTooltip text="Quitar producto">
  <UButton
@@ -624,14 +624,14 @@ async function holdCurrentTicket() {
  <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-4 sm:p-5' }">
  <div class="mb-3">
  <h2 id="checkout-title" class="font-bold">Cobro</h2>
- <p class="mt-1 text-sm text-[#7a847e]">Resumen y forma de pago de la venta.</p>
+ <p class="mt-1 text-sm text-[#64748b]">Resumen y forma de pago de la venta.</p>
  </div>
  <ActionFeedback v-if="checkoutError" class="mb-3" :message="checkoutError" type="error" @dismiss="checkoutError = ''" />
  <ActionFeedback v-if="heldTicketError" class="mb-3" :message="heldTicketError" type="error" @dismiss="heldTicketError = ''" />
- <div class="rounded-xl border border-[#cdd9d2] bg-[#edf7f0] p-3">
+ <div class="rounded-xl border border-[#cdd9d2] bg-[#f1f6fa] p-3">
  <div>
  <p class="text-xs font-bold uppercase tracking-[.14em] text-[#456052]">{{ shouldRoundPaymentMethod(paymentMethod) ? 'Total a cobrar' : 'Total' }}</p>
- <p class="mt-1 max-w-full break-words text-right font-mono text-[clamp(2rem,3.8vw,3rem)] font-black leading-none tracking-[-.06em] text-[#233071] tabular-nums">
+ <p class="mt-1 max-w-full break-words text-right font-mono text-[clamp(2rem,3.8vw,3rem)] font-black leading-none tracking-[-.06em] text-[#385872] tabular-nums">
  {{ currency.format(paymentTotal) }}
  </p>
  </div>
@@ -646,8 +646,8 @@ async function holdCurrentTicket() {
  </div>
  </div>
  <div v-if="shouldRoundPaymentMethod(paymentMethod) && paymentTotal !== total" class="mt-2 flex items-center justify-between">
- <p class="text-xs text-[#748078]">Ajuste por redondeo</p>
- <p class="text-sm font-semibold text-[#536057]">{{ currency.format(paymentTotal - total) }}</p>
+ <p class="text-xs text-[#64748b]">Ajuste por redondeo</p>
+ <p class="text-sm font-semibold text-[#475569]">{{ currency.format(paymentTotal - total) }}</p>
  </div>
  </div>
  <div v-if="paymentMethod === 'CASH'" class="mt-3">
@@ -770,7 +770,7 @@ async function holdCurrentTicket() {
  aria-label="Tipo de venta sin código"
  />
  </UFormField>
- <p class="rounded-xl bg-[#f7faf8] px-3 py-2 text-xs text-[#68746d]">
+ <p class="rounded-xl bg-[#f7fafc] px-3 py-2 text-xs text-[#475569]">
  Esta partida aparecerá en el ticket como “SIN-CODIGO” y no descontará inventario.
  </p>
  </form>
@@ -786,53 +786,53 @@ async function holdCurrentTicket() {
  <USlideover v-model:open="ticketOpen" title="Ticket de venta" description="Comprobante detallado de la operación">
  <template #body>
  <div v-if="ticket" class="space-y-5">
- <div class="rounded-2xl border border-[#e1e6e2] bg-white p-5">
+ <div class="rounded-2xl border border-[#d8e7f1] bg-white p-5 dark:border-slate-600 dark:bg-slate-800">
  <div class="flex items-start justify-between gap-4">
  <div>
- <p class="text-xs uppercase tracking-[.18em] text-[#7d8781]">ABR Store</p>
+ <p class="text-xs uppercase tracking-[.18em] text-[#64748b] dark:text-slate-300">ABR Store</p>
  <h3 class="mt-1 text-xl font-bold">Ticket #{{ ticket.folio }}</h3>
- <p class="mt-1 text-sm text-[#7d8781]">{{ dateTime.format(new Date(ticket.createdAt)) }}</p>
+ <p class="mt-1 text-sm text-[#64748b] dark:text-slate-300">{{ dateTime.format(new Date(ticket.createdAt)) }}</p>
  </div>
  <UBadge label="Pagado" color="success" variant="soft" />
  </div>
- <div class="mt-4 rounded-xl bg-[#f7faf8] p-3 text-sm">
+ <div class="mt-4 rounded-xl bg-[#f7fafc] p-3 text-sm dark:bg-slate-700">
  <p class="font-semibold">Vendedor</p>
- <p class="mt-1 text-[#68746d]">{{ ticket.seller.fullName }}</p>
- <p class="text-xs text-[#89928d]">{{ ticket.seller.email }}</p>
+ <p class="mt-1 text-[#475569] dark:text-slate-200">{{ ticket.seller.fullName }}</p>
+ <p class="text-xs text-[#64748b] dark:text-slate-300">{{ ticket.seller.email }}</p>
  </div>
- <p class="mt-3 text-xs text-[#7d8781]">Forma de pago: {{ paymentMethodLabel(ticket.paymentMethod) }}</p>
- <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod)" class="mt-3 grid gap-1 rounded-xl bg-[#f7faf8] p-3 text-xs text-[#68746d]">
+ <p class="mt-3 text-xs text-[#64748b] dark:text-slate-300">Forma de pago: {{ paymentMethodLabel(ticket.paymentMethod) }}</p>
+ <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod)" class="mt-3 grid gap-1 rounded-xl bg-[#f7fafc] p-3 text-xs text-[#475569] dark:bg-slate-700 dark:text-slate-200">
  <p>Total a cobrar: <span class="font-semibold">{{ currency.format(ticket.paymentTotal) }}</span></p>
  <p v-if="ticket.paymentMethod === 'CASH'">Recibido: <span class="font-semibold">{{ currency.format(ticket.cashReceived ?? 0) }}</span></p>
  <p v-if="ticket.paymentMethod === 'CASH'">Cambio: <span class="font-semibold">{{ currency.format(ticket.changeDue ?? 0) }}</span></p>
  </div>
- <p v-if="ticket.cashSession" class="mt-3 text-xs text-[#7d8781]">Caja: {{ ticket.cashSession.id.slice(-6).toUpperCase() }}</p>
+ <p v-if="ticket.cashSession" class="mt-3 text-xs text-[#64748b] dark:text-slate-300">Caja: {{ ticket.cashSession.id.slice(-6).toUpperCase() }}</p>
  </div>
 
- <div class="overflow-hidden rounded-2xl border border-[#e1e6e2] bg-white">
- <ul class="divide-y divide-[#edf0ed]" aria-label="Productos vendidos">
+ <div class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white dark:border-slate-600 dark:bg-slate-800">
+ <ul class="divide-y divide-[#d8e7f1] dark:divide-slate-600" aria-label="Productos vendidos">
  <li v-for="item in ticket.items" :key="item.id" class="p-4">
  <div class="flex justify-between gap-4">
  <div class="min-w-0">
  <p class="truncate text-sm font-semibold">{{ item.name }}</p>
- <p class="mt-1 text-xs text-[#7d8781]">{{ item.sku }} · {{ item.quantity }} {{ item.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} × {{ currency.format(item.unitPrice) }}</p>
+ <p class="mt-1 text-xs text-[#64748b] dark:text-slate-300">{{ item.sku }} · {{ item.quantity }} {{ item.unit === 'KILOGRAM' ? 'kg' : 'pzas' }} × {{ currency.format(item.unitPrice) }}</p>
  </div>
  <p class="whitespace-nowrap text-sm font-bold">{{ currency.format(item.lineTotal) }}</p>
  </div>
  </li>
  </ul>
- <div class="border-t border-[#edf0ed] bg-[#fbfcfb] p-4">
+ <div class="border-t border-[#d8e7f1] bg-[#f7fafc] p-4 dark:border-slate-600 dark:bg-slate-700">
  <div class="flex items-center justify-between">
- <p class="text-sm text-[#748078]">Artículos</p>
+ <p class="text-sm text-[#64748b] dark:text-slate-300">Artículos</p>
  <p class="font-semibold">{{ ticket.itemCount }}</p>
  </div>
  <div class="mt-3 flex items-end justify-between">
  <p class="text-lg font-bold">{{ shouldRoundPaymentMethod(ticket.paymentMethod) ? 'Subtotal' : 'Total' }}</p>
- <p class="text-3xl font-bold tracking-[-.04em] text-[#1f4937]">{{ currency.format(ticket.total) }}</p>
+ <p class="text-3xl font-bold tracking-[-.04em] text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(ticket.total) }}</p>
  </div>
  <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod) && ticket.paymentTotal !== ticket.total" class="mt-3 flex items-center justify-between">
- <p class="text-sm text-[#748078]">Total cobrado</p>
- <p class="text-xl font-bold text-[#1f4937]">{{ currency.format(ticket.paymentTotal) }}</p>
+ <p class="text-sm text-[#64748b] dark:text-slate-300">Total cobrado</p>
+ <p class="text-xl font-bold text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(ticket.paymentTotal) }}</p>
  </div>
  </div>
  </div>

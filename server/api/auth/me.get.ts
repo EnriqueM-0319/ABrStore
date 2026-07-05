@@ -3,18 +3,18 @@ import { graphqlRequest } from '../../utils'
 const meQuery = `#graphql
  query Me {
   me {
-   id
    fullName
-   email
-   username
-   phone
    role
-   active
   }
  }
 `
 
 export default defineEventHandler(async (event) => {
- const data = await graphqlRequest<{ me: unknown }>(event, meQuery)
- return data.me
+ const data = await graphqlRequest<{ me: { fullName: string, role: string } | null }>(event, meQuery)
+ if (!data.me) return null
+
+ return {
+  displayName: data.me.fullName,
+  role: data.me.role
+ }
 })

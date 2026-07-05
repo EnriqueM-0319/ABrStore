@@ -6,10 +6,10 @@ export default defineNuxtConfig({
     head: {
       title: 'ABR Store',
       meta: [
-        { name: 'theme-color', content: '#1f4937' },
+        { name: 'theme-color', content: '#4f7896' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
-        { name: 'apple-mobile-web-app-title', content: 'ABR Store' },
+        { name: 'apple-mobile-web-app-title', content: 'Abarrotes Alex' },
         { name: 'mobile-web-app-capable', content: 'yes' }
       ],
       link: [
@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    sessionSecret: process.env.NUXT_SESSION_SECRET || 'cambia-esta-clave-en-produccion',
+    sessionSecret: process.env.NUXT_SESSION_SECRET,
     graphqlEndpoint: process.env.NUXT_GRAPHQL_ENDPOINT || 'http://localhost:4000/graphql'
   },
 

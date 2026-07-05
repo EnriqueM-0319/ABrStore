@@ -149,7 +149,7 @@ async function toggleActiveProduct() {
  <FormField v-model="form.costPrice" name="product-cost" label="Costo unitario" type="number" placeholder="0.00" autocomplete="off" />
  <FormField v-model="form.profitMargin" name="product-margin" label="Ganancia (%)" type="number" placeholder="30" autocomplete="off" />
  </div>
- <div class="rounded-xl border border-[#e2e7e3] bg-[#f8faf8] p-3">
+ <div class="rounded-xl border border-[#e2e7e3] bg-[#f8faf8] p-3 dark:border-slate-600 dark:bg-slate-800">
  <div class="mb-2 flex items-center justify-between gap-3">
  <p class="text-sm font-semibold">Calcular precio automáticamente</p>
  <USwitch v-model="autoPrice" aria-label="Calcular precio al público automáticamente" />
@@ -182,11 +182,11 @@ async function toggleActiveProduct() {
  variant="outline"
  class="w-full"
  aria-label="Existencia actual bloqueada"
- :ui="{ base: 'rounded-xl bg-[#f3f6f4] font-semibold text-[#536057]' }"
+ :ui="{ base: 'rounded-xl bg-[#f3f6f4] font-semibold text-[#475569] dark:bg-slate-700 dark:text-slate-200' }"
  />
  </UFormField>
  </div>
- <div v-if="isEditing" class="rounded-xl border border-[#dce6df] bg-[#f8faf8] p-3">
+ <div v-if="isEditing" class="rounded-xl border border-[#dce6df] bg-[#f8faf8] p-3 dark:border-slate-600 dark:bg-slate-800">
  <div class="grid gap-3 sm:grid-cols-2">
  <UFormField label="Nueva cantidad" name="product-stock-adjustment">
  <UInput
@@ -198,13 +198,13 @@ async function toggleActiveProduct() {
  size="lg"
  class="w-full"
  aria-label="Cantidad a sumar o restar al inventario"
- :ui="{ base: 'rounded-xl bg-white text-[#17221d] placeholder:text-[#8b958f]' }"
+ :ui="{ base: 'rounded-xl bg-white text-[#0f172a] placeholder:text-[#94a3b8] dark:bg-slate-700 dark:text-slate-100 dark:placeholder:text-slate-400' }"
  />
  </UFormField>
  <UFormField label="Existencia final" name="product-projected-stock">
  <div
  class="flex min-h-12 items-center justify-between rounded-xl border px-3 text-sm"
- :class="projectedStockIsInvalid ? 'border-red-200 bg-red-50 text-red-800' : 'border-emerald-200 bg-emerald-50 text-emerald-900'"
+ :class="projectedStockIsInvalid ? 'border-red-200 bg-red-50 text-red-800 dark:border-red-700 dark:bg-red-950/35 dark:text-red-200' : 'border-sky-200 bg-sky-50 text-slate-700 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100'"
  aria-live="polite"
  >
  <span class="font-semibold">{{ projectedStock }} {{ stockUnitLabel }}</span>
