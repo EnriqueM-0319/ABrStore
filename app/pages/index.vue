@@ -3,5 +3,5 @@ await navigateTo('/login')
 </script>
 
 <template>
-  <div aria-hidden="true" />
+ <div aria-hidden="true" />
 </template>
