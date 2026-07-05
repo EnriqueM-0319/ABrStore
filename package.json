@@ -7,12 +7,9 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "prisma generate && nuxt prepare",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@prisma/client": "6.19.3",
     "@nuxt/eslint": "1.16.0",
     "@nuxt/ui": "^4.9.0",
     "@types/node": "^26.0.0",
@@ -25,7 +22,6 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.100",
-    "prisma": "6.19.3"
+    "@iconify-json/lucide": "^1.2.100"
   }
 }

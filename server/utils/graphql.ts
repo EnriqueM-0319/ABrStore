@@ -16,6 +16,17 @@ interface GraphqlResponse<T> {
  errors?: GraphqlError[]
 }
 
+type RequestErrorLike = {
+ statusCode?: number
+ status?: number
+}
+
+function getRequestStatus(error: unknown) {
+ if (!error || typeof error !== 'object') return null
+ const requestError = error as RequestErrorLike
+ return requestError.statusCode || requestError.status || null
+}
+
 function getGraphqlStatus(error: GraphqlError) {
  const statusCode = error.extensions?.originalError?.statusCode
  if (Number.isInteger(statusCode)) return statusCode
@@ -32,20 +43,52 @@ function appendBackendCookies(event: H3Event, response: Response) {
  appendResponseHeader(event, 'set-cookie', setCookie)
 }
 
+function getBackendCookieHeader(event: H3Event) {
+ const session = getCookie(event, 'abr_session')
+ return session ? { cookie: `abr_session=${encodeURIComponent(session)}` } : {}
+}
+
+function getGraphqlEndpoint() {
+ const endpoint = useRuntimeConfig().graphqlEndpoint
+ try {
+  const url = new URL(endpoint)
+  if (url.protocol === 'http:' || url.protocol === 'https:') return endpoint
+ } catch {
+  // Handled below with a generic server error.
+ }
+
+ throw createError({ statusCode: 500, message: 'No pudimos preparar la conexión con el servidor.' })
+}
+
+function getBackendConnectionError() {
+ return createError({
+  statusCode: 503,
+  message: 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo nuevamente.'
+ })
+}
+
 export async function graphqlRequest<T>(
  event: H3Event,
  query: string,
  variables?: Record<string, unknown>
 ) {
- const config = useRuntimeConfig()
- const response = await $fetch.raw<GraphqlResponse<T>>(config.graphqlEndpoint, {
+ let response
+
+ try {
+ response = await $fetch.raw<GraphqlResponse<T>>(getGraphqlEndpoint(), {
  method: 'POST',
  headers: {
   'content-type': 'application/json',
-  ...(getRequestHeader(event, 'cookie') ? { cookie: getRequestHeader(event, 'cookie') as string } : {})
+  ...getBackendCookieHeader(event)
  },
  body: { query, variables }
  })
+ } catch (error: unknown) {
+ const statusCode = getRequestStatus(error)
+ if (statusCode && statusCode >= 400 && statusCode < 500) throw error
+
+ throw getBackendConnectionError()
+ }
 
  appendBackendCookies(event, response)
 
