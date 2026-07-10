@@ -283,11 +283,10 @@ function chartBarHeight(total: number) {
 
 <template>
  <DashboardShell eyebrow="Administración" title="Reporte de ventas">
- <div class="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
- <div class="mb-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+ <div class="mx-auto max-w-[1320px] p-4 sm:p-5 lg:p-6">
+ <div class="mb-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
  <div>
- <h2 class="text-xl font-bold">Métricas de ventas</h2>
- <p class="mt-1 text-sm text-[#64748b]">Analiza cómo nacieron las ventas: efectivo, tarjeta, transferencia y fiado.</p>
+ <h2 class="text-lg font-bold">Métricas de ventas</h2>
  </div>
  <div class="flex flex-wrap gap-2">
  <UButton to="/dashboard/reports/creditCollections" label="Ver cobros de fiado" icon="i-lucide-hand-coins" color="neutral" variant="soft" />
@@ -296,7 +295,7 @@ function chartBarHeight(total: number) {
  </div>
  </div>
 
- <UCard class="mb-5" :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-4' }">
+ <UCard class="mb-4" :ui="{ root: 'rounded-lg ring-[#dde3de]', body: 'p-3' }">
  <div class="grid gap-3 lg:grid-cols-[1fr_1fr_1fr] lg:items-end">
  <UFormField label="Agrupar ventas" name="sales-report-group">
  <USelect v-model="groupBy" :items="groupOptions" value-key="value" label-key="label" class="w-full" />
@@ -310,7 +309,7 @@ function chartBarHeight(total: number) {
  </div>
  </UCard>
 
- <UAlert v-if="error" class="mb-5" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar el reporte">
+ <UAlert v-if="error" class="mb-4" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar el reporte">
  <template #actions>
  <UButton label="Reintentar" color="error" variant="soft" @click="refresh()" />
  </template>
@@ -318,7 +317,7 @@ function chartBarHeight(total: number) {
 
  <UAlert
  v-if="isRefreshing"
- class="mb-5"
+ class="mb-4"
  color="neutral"
  variant="soft"
  icon="i-lucide-refresh-cw"
@@ -326,31 +325,31 @@ function chartBarHeight(total: number) {
  description="Mostramos los datos actuales mientras consultamos cambios."
  />
 
- <div v-if="isLoading" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
- <USkeleton v-for="item in 4" :key="item" class="h-32 rounded-2xl" />
+ <div v-if="isLoading" class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+ <USkeleton v-for="item in 4" :key="item" class="h-24 rounded-lg" />
  </div>
 
  <template v-else>
- <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
- <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#64748b]">Venta total</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#456a88]">{{ currency.format(data.summary.grossTotal) }}</p>
+ <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+ <UCard :ui="{ root: 'rounded-lg ring-[#dde3de]', body: 'p-4' }">
+ <p class="text-xs font-medium text-[#64748b]">Venta total</p>
+ <p class="mt-1 text-2xl font-black text-[#456a88]">{{ currency.format(data.summary.grossTotal) }}</p>
  </UCard>
- <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#64748b]">Tickets vendidos</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#385872]">{{ numberFormat.format(data.summary.salesCount) }}</p>
+ <UCard :ui="{ root: 'rounded-lg ring-[#dde3de]', body: 'p-4' }">
+ <p class="text-xs font-medium text-[#64748b]">Tickets vendidos</p>
+ <p class="mt-1 text-2xl font-black text-[#385872]">{{ numberFormat.format(data.summary.salesCount) }}</p>
  </UCard>
- <UCard :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-5' }">
- <p class="text-sm text-[#64748b]">Ticket promedio</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-[#456a88]">{{ currency.format(data.summary.averageTicket) }}</p>
+ <UCard :ui="{ root: 'rounded-lg ring-[#dde3de]', body: 'p-4' }">
+ <p class="text-xs font-medium text-[#64748b]">Ticket promedio</p>
+ <p class="mt-1 text-2xl font-black text-[#456a88]">{{ currency.format(data.summary.averageTicket) }}</p>
  </UCard>
- <UCard :ui="{ root: 'rounded-2xl ring-red-100 bg-red-50/60', body: 'p-5' }">
- <p class="text-sm text-red-800">Cancelados</p>
- <p class="mt-2 text-3xl font-black tracking-[-.04em] text-red-900">{{ numberFormat.format(data.summary.canceledCount) }}</p>
+ <UCard :ui="{ root: 'rounded-lg ring-red-100 bg-red-50/60', body: 'p-4' }">
+ <p class="text-xs font-medium text-red-800">Cancelados</p>
+ <p class="mt-1 text-2xl font-black text-red-900">{{ numberFormat.format(data.summary.canceledCount) }}</p>
  </UCard>
  </div>
 
- <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+ <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
  <UAlert color="success" variant="soft" icon="i-lucide-banknote" title="Efectivo" :description="currency.format(data.summary.cashTotal)" />
  <UAlert color="neutral" variant="soft" icon="i-lucide-credit-card" title="Tarjeta" :description="currency.format(data.summary.cardTotal)" />
  <UAlert color="neutral" variant="soft" icon="i-lucide-send" title="Transferencia" :description="currency.format(data.summary.transferTotal)" />
@@ -358,7 +357,7 @@ function chartBarHeight(total: number) {
  <UAlert color="success" variant="soft" icon="i-lucide-hand-coins" title="Fiado pagado" :description="currency.format(data.summary.creditPaidTotal)" />
  </div>
 
- <UCard class="mt-5" :ui="{ root: 'rounded-2xl ring-[#dde3de]', header: 'p-5', body: 'p-5' }">
+ <UCard class="mt-4" :ui="{ root: 'rounded-lg ring-[#dde3de]', header: 'p-4', body: 'p-4' }">
  <template #header>
  <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
  <div>
@@ -369,18 +368,13 @@ function chartBarHeight(total: number) {
  </div>
  </template>
 
- <div v-if="!data.summary.grossTotal" class="p-10 text-center">
- <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-9 text-[#94a3b8]" aria-hidden="true" />
- <h4 class="mt-3 font-bold">No hay ventas en este rango</h4>
- <p class="mt-1 text-sm text-[#64748b]">Cambia las fechas o vuelve cuando existan ventas registradas.</p>
+ <div v-if="!data.summary.grossTotal" class="p-8 text-center">
+ <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-7 text-[#94a3b8]" aria-hidden="true" />
+ <h4 class="mt-2 font-bold">No hay ventas en este rango</h4>
  </div>
 
  <div v-else class="overflow-x-auto">
  <div class="min-w-[42rem]">
- <div class="mb-3">
- <h4 class="font-semibold text-[#0f172a]">Ventas originadas</h4>
- <p class="text-xs text-[#64748b]">Clasifica la venta según cómo nació el ticket. El fiado pagado sigue siendo una venta fiada, pero ya no está pendiente.</p>
- </div>
  <div class="mb-3 flex items-center justify-between text-xs text-[#64748b]">
  <div class="flex flex-wrap items-center gap-3">
  <span
@@ -393,21 +387,20 @@ function chartBarHeight(total: number) {
  {{ series.label }}
  </span>
  </div>
- <span>Máximo: {{ currency.format(maxPeriodTotal) }}</span>
  </div>
- <div class="flex h-72 items-end gap-3 border-b border-l border-[#c7dbe8] px-3 pt-4" aria-label="Gráfica de barras de ventas por periodo y forma de pago">
+ <div class="flex h-56 items-end gap-3 border-b border-l border-[#c7dbe8] px-3 pt-3" aria-label="Gráfica de barras de ventas por periodo y forma de pago">
  <div
  v-for="item in chartItems"
  :key="item.period"
  class="flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
  :title="`${formatPeriod(item.period)} · Efectivo ${currency.format(item.cashTotal)} · Tarjeta ${currency.format(item.cardTotal)} · Fiado pendiente ${currency.format(item.creditPendingTotal)} · Fiado pagado ${currency.format(item.creditPaidTotal)}`"
  >
- <span class="max-w-24 truncate text-xs font-semibold text-[#456a88]">{{ item.grossTotal ? currency.format(item.grossTotal) : '' }}</span>
- <div class="flex h-56 w-full items-end justify-center gap-1.5">
+ <span class="max-w-20 truncate text-[11px] font-semibold text-[#456a88]">{{ item.grossTotal ? currency.format(item.grossTotal) : '' }}</span>
+ <div class="flex h-40 w-full items-end justify-center gap-1.5">
  <div
  v-for="series in salesChartSeries"
  :key="series.key"
- class="w-full max-w-4 rounded-t-lg transition-all"
+ class="w-full max-w-3 rounded-t transition-all"
  :class="item[series.key] ? `${series.color} shadow-sm` : 'bg-[#e7ece8]'"
  :style="{ height: chartBarHeight(item[series.key]) }"
  role="img"

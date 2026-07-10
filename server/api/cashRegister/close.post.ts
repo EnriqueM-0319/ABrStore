@@ -10,6 +10,7 @@ const closeCashRegisterMutation = `#graphql
 `
 
 export default defineEventHandler(async (event) => {
+ setHeader(event, 'Cache-Control', 'no-store, max-age=0')
  const body = await readBody(event)
  const closingAmount = Number(body.closingAmount)
  const notes = String(body.notes || '').trim() || null

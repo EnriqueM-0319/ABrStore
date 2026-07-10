@@ -10,10 +10,10 @@ const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: '
 const dateTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
 
 const { cashSession, status: cashStatus, init: initCashSession, refresh: refreshCash, clearSession } = useCurrentCashSession()
-
-onMounted(() => initCashSession())
+const summaryRefreshKey = ref(Date.now())
 
 const { data: summary, status: summaryStatus, error: summaryError, refresh: refreshSummary } = useFetch<CashRegisterSummary | null>('/api/cashRegister/summary', {
+ query: computed(() => ({ _ts: summaryRefreshKey.value })),
  default: () => null,
  lazy: true,
  server: false
@@ -30,8 +30,19 @@ function differenceColor(value: number) {
 }
 
 async function refreshAll() {
+ summaryRefreshKey.value = Date.now()
  await Promise.all([refreshCash({ force: true }), refreshSummary()])
 }
+
+onMounted(() => {
+ initCashSession()
+ void refreshAll()
+ if (import.meta.client) window.addEventListener('focus', refreshAll)
+})
+
+onBeforeUnmount(() => {
+ if (import.meta.client) window.removeEventListener('focus', refreshAll)
+})
 
 async function closeCashRegister() {
  closing.value = true

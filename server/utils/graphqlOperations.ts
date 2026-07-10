@@ -108,6 +108,43 @@ export const saleFields = `
  }
 `
 
+export const productSalesReportFields = `
+ groupBy
+ startDate
+ endDate
+ totalQuantity
+ totalAmount
+ topProduct {
+  productId
+  sku
+  name
+  quantity
+  total
+  share
+ }
+ lowestProduct {
+  productId
+  sku
+  name
+  quantity
+  total
+  share
+ }
+ items {
+  productId
+  sku
+  name
+  quantity
+  total
+  share
+ }
+ periodItems {
+  period
+  quantity
+  total
+ }
+`
+
 export const heldTicketFields = `
  id
  note

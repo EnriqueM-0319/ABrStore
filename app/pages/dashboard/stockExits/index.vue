@@ -15,6 +15,9 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined
 const toast = useToast()
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
 const reasonOptions = [{ label: 'Caducidad', value: 'EXPIRED' }, { label: 'Producto dañado', value: 'DAMAGED' }]
+const unitLabel = (product: Product) => product.unit === 'KILOGRAM' ? 'kg' : 'pzas'
+const productDetail = (product: Product) => product.description?.trim() || (product.unit === 'KILOGRAM' ? 'Venta por kilo' : 'Venta por pieza')
+const productStockLabel = (product: Product) => `${product.stock} ${unitLabel(product)}`
 
 watch(search, (value) => {
  clearTimeout(searchTimer)
@@ -36,6 +39,8 @@ const isSearchingProducts = computed(() => productStatus.value === 'pending' && 
 
 function selectProduct(product: Product) {
  selectedProduct.value = product
+ search.value = ''
+ debouncedSearch.value = ''
  form.quantity = product.unit === 'KILOGRAM' ? '0.001' : '1'
  formError.value = ''
 }
@@ -95,13 +100,20 @@ async function registerExit() {
  <template #actions><UButton label="Reintentar" color="error" variant="soft" size="sm" @click="refreshProducts()" /></template>
  </UAlert>
 
- <div v-if="products.length" class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white dark:border-slate-600 dark:bg-slate-800">
+ <div v-if="products.length && !selectedProduct" class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white dark:border-slate-600 dark:bg-slate-800">
  <ul class="divide-y divide-[#d8e7f1] dark:divide-slate-600" aria-label="Productos encontrados">
  <li v-for="product in products" :key="product.id">
- <button class="flex w-full items-center gap-3 p-4 text-left transition hover:bg-[#f1f6fa] dark:hover:bg-slate-700" :class="selectedProduct?.id === product.id ? 'bg-[#e8f1f7] dark:bg-slate-700' : ''" @click="selectProduct(product)">
+ <button class="flex w-full items-start gap-3 p-4 text-left transition hover:bg-[#f1f6fa] dark:hover:bg-slate-700" :class="selectedProduct?.id === product.id ? 'bg-[#e8f1f7] dark:bg-slate-700' : ''" @click="selectProduct(product)">
  <span class="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f1f6fa] text-[#456a88] dark:bg-slate-700 dark:text-[#c8d6df]"><UIcon name="i-lucide-package" class="size-5" /></span>
- <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold text-slate-950 dark:text-slate-100">{{ product.name }}</span><span class="mt-1 block text-xs text-[#64748b] dark:text-slate-300">{{ product.sku }} · {{ product.stock }} {{ product.unit === 'KILOGRAM' ? 'kg' : 'pzas' }}</span></span>
- <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ currency.format(product.price) }}</span>
+ <span class="min-w-0 flex-1">
+ <span class="block truncate text-sm font-semibold text-slate-950 dark:text-slate-100">{{ product.name }}</span>
+ <span class="mt-1 block truncate text-xs text-[#475569] dark:text-slate-300">{{ productDetail(product) }}</span>
+ <span class="mt-2 flex flex-wrap gap-2">
+ <UBadge :label="product.sku" color="neutral" variant="soft" size="sm" />
+ <UBadge :label="productStockLabel(product)" color="primary" variant="soft" size="sm" />
+ <UBadge :label="currency.format(product.price)" color="success" variant="soft" size="sm" />
+ </span>
+ </span>
  </button>
  </li>
  </ul>
@@ -110,7 +122,12 @@ async function registerExit() {
  <form v-if="selectedProduct" class="space-y-4 rounded-2xl border border-[#d8e7f1] bg-[#f7fafc] p-4 dark:border-slate-600 dark:bg-slate-800" @submit.prevent="registerExit">
  <div>
  <p class="font-semibold">{{ selectedProduct.name }}</p>
- <p class="mt-1 text-xs text-[#64748b] dark:text-slate-300">Disponible: {{ selectedProduct.stock }} {{ selectedProduct.unit === 'KILOGRAM' ? 'kg' : 'pzas' }}</p>
+ <p class="mt-1 text-xs text-[#475569] dark:text-slate-300">{{ productDetail(selectedProduct) }}</p>
+ <div class="mt-2 flex flex-wrap gap-2">
+ <UBadge :label="selectedProduct.sku" color="neutral" variant="soft" size="sm" />
+ <UBadge :label="`Disponible: ${productStockLabel(selectedProduct)}`" color="primary" variant="soft" size="sm" />
+ <UBadge :label="currency.format(selectedProduct.price)" color="success" variant="soft" size="sm" />
+ </div>
  </div>
  <div class="grid gap-3 sm:grid-cols-2">
  <UFormField label="Motivo" name="reason" required><USelect v-model="form.reason" :items="reasonOptions" value-key="value" label-key="label" class="w-full" /></UFormField>
