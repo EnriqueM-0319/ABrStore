@@ -22,7 +22,7 @@ const itemCancelError = ref('')
 const toast = useToast()
 const limitOptions = [{ label: '10 por página', value: 10 }, { label: '20 por página', value: 20 }, { label: '50 por página', value: 50 }]
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
-const dateTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+const dateTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Cancun' })
 const paymentMethodLabels = {
  CASH: 'Efectivo',
  CARD: 'Tarjeta',
@@ -139,6 +139,15 @@ function openDetail(sale: SaleTicket) {
  itemCancelReason.value = ''
  itemCancelError.value = ''
  detailOpen.value = true
+}
+
+function reprintSelectedSale() {
+ if (!selectedSale.value) return
+
+ const printed = printSaleTicket(selectedSale.value)
+ if (!printed) {
+ toast.add({ title: 'No se pudo abrir impresión', description: 'Permite ventanas emergentes para reimprimir el ticket.', color: 'warning', icon: 'i-lucide-printer' })
+ }
 }
 
 function goToPage(nextPage: number) {
@@ -301,13 +310,18 @@ async function cancelSaleItem() {
  <template #body>
  <div v-if="selectedSale" class="space-y-5">
  <div class="rounded-2xl border border-[#d8e7f1] bg-white p-5 dark:border-slate-600 dark:bg-slate-800">
- <p class="text-xs uppercase tracking-[.18em] text-[#64748b] dark:text-slate-300">ABR Store</p>
+ <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+ <div>
+ <p class="text-xs uppercase tracking-[.18em] text-[#64748b] dark:text-slate-300">Abarrotes Alex</p>
  <div class="mt-1 flex flex-wrap items-center gap-2">
  <h3 class="text-xl font-bold">Ticket #{{ selectedSale.folio }}</h3>
  <UBadge v-if="selectedSale.canceledAt" label="Cancelado" color="error" variant="soft" />
  <UBadge v-else-if="selectedSale.canCancel" label="Cancelable" color="success" variant="soft" />
  </div>
  <p class="mt-1 text-sm text-[#64748b] dark:text-slate-300">{{ dateTime.format(new Date(selectedSale.createdAt)) }}</p>
+ </div>
+ <UButton label="Reimprimir" icon="i-lucide-printer" color="neutral" variant="soft" @click="reprintSelectedSale" />
+ </div>
  <UAlert
  v-if="selectedSale.canceledAt"
  class="mt-4"

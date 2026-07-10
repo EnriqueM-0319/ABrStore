@@ -78,7 +78,7 @@ const creditCustomerIsMissing = computed(() => paymentMethod.value === 'CREDIT' 
 const isInitialSearchLoading = computed(() => status.value === 'pending' && Boolean(debouncedSearch.value) && !products.value.length)
 const isSearching = computed(() => status.value === 'pending' && Boolean(debouncedSearch.value) && products.value.length > 0)
 const currency = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
-const dateTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+const dateTime = new Intl.DateTimeFormat('es-MX', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Cancun' })
 const cashIsLoading = computed(() => cashStatus.value === 'pending')
 const checkoutLabel = computed(() => {
  if (cashIsLoading.value) return 'Verificando caja'
@@ -97,7 +97,6 @@ const manualUnitOptions: Array<{ label: string, value: Product['unit'] }> = [
  { label: 'Pieza', value: 'PIECE' },
  { label: 'Kilo', value: 'KILOGRAM' }
 ]
-
 function addProduct(product: Product) {
  const existing = cart.value.find(item => item.id === product.id)
  if (existing) {
@@ -368,6 +367,15 @@ function roundPayableTotal(value: number) {
  if (cents < 50) return pesos
  if (cents === 50) return pesos + 0.5
  return pesos + 1
+}
+
+function printTicket() {
+ if (!import.meta.client || !ticket.value) return
+
+ const printed = printSaleTicket(ticket.value)
+ if (!printed) {
+ toast.add({ title: 'No se pudo abrir impresión', description: 'Permite ventanas emergentes para imprimir el ticket.', color: 'warning', icon: 'i-lucide-printer' })
+ }
 }
 
 watch(paymentMethod, (method) => {
@@ -783,24 +791,24 @@ async function holdCurrentTicket() {
  </template>
  </UModal>
 
- <USlideover v-model:open="ticketOpen" title="Ticket de venta" description="Comprobante detallado de la operación">
+ <UModal
+ v-model:open="ticketOpen"
+ title="Ticket de venta"
+ description="Comprobante detallado de la operación"
+ :ui="{ content: 'sm:max-w-2xl', body: 'p-0', footer: 'border-t border-[#d8e7f1] bg-white p-0 dark:border-slate-600 dark:bg-slate-800' }"
+ >
  <template #body>
- <div v-if="ticket" class="space-y-5">
- <div class="rounded-2xl border border-[#d8e7f1] bg-white p-5 dark:border-slate-600 dark:bg-slate-800">
+ <div v-if="ticket" class="bg-[#f7fafc] dark:bg-slate-900">
+ <div class="border-b border-[#d8e7f1] bg-white p-5 dark:border-slate-600 dark:bg-slate-800">
  <div class="flex items-start justify-between gap-4">
  <div>
- <p class="text-xs uppercase tracking-[.18em] text-[#64748b] dark:text-slate-300">ABR Store</p>
+ <p class="text-xs uppercase tracking-[.18em] text-[#64748b] dark:text-slate-300">Abarrotes Alex</p>
  <h3 class="mt-1 text-xl font-bold">Ticket #{{ ticket.folio }}</h3>
  <p class="mt-1 text-sm text-[#64748b] dark:text-slate-300">{{ dateTime.format(new Date(ticket.createdAt)) }}</p>
  </div>
  <UBadge label="Pagado" color="success" variant="soft" />
  </div>
- <div class="mt-4 rounded-xl bg-[#f7fafc] p-3 text-sm dark:bg-slate-700">
- <p class="font-semibold">Vendedor</p>
- <p class="mt-1 text-[#475569] dark:text-slate-200">{{ ticket.seller.fullName }}</p>
- <p class="text-xs text-[#64748b] dark:text-slate-300">{{ ticket.seller.email }}</p>
- </div>
- <p class="mt-3 text-xs text-[#64748b] dark:text-slate-300">Forma de pago: {{ paymentMethodLabel(ticket.paymentMethod) }}</p>
+ <p class="mt-4 text-xs text-[#64748b] dark:text-slate-300">Forma de pago: {{ paymentMethodLabel(ticket.paymentMethod) }}</p>
  <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod)" class="mt-3 grid gap-1 rounded-xl bg-[#f7fafc] p-3 text-xs text-[#475569] dark:bg-slate-700 dark:text-slate-200">
  <p>Total a cobrar: <span class="font-semibold">{{ currency.format(ticket.paymentTotal) }}</span></p>
  <p v-if="ticket.paymentMethod === 'CASH'">Recibido: <span class="font-semibold">{{ currency.format(ticket.cashReceived ?? 0) }}</span></p>
@@ -809,9 +817,13 @@ async function holdCurrentTicket() {
  <p v-if="ticket.cashSession" class="mt-3 text-xs text-[#64748b] dark:text-slate-300">Caja: {{ ticket.cashSession.id.slice(-6).toUpperCase() }}</p>
  </div>
 
- <div class="overflow-hidden rounded-2xl border border-[#d8e7f1] bg-white dark:border-slate-600 dark:bg-slate-800">
- <ul class="divide-y divide-[#d8e7f1] dark:divide-slate-600" aria-label="Productos vendidos">
- <li v-for="item in ticket.items" :key="item.id" class="p-4">
+ <div class="bg-white dark:bg-slate-800">
+ <div class="border-b border-[#d8e7f1] px-5 py-3 dark:border-slate-600">
+ <p class="text-sm font-bold">Productos vendidos</p>
+ <p class="mt-0.5 text-xs text-[#64748b] dark:text-slate-300">{{ ticket.items.length }} partidas</p>
+ </div>
+ <ul class="max-h-[min(32vh,14rem)] divide-y divide-[#d8e7f1] overflow-y-auto dark:divide-slate-600" aria-label="Productos vendidos">
+ <li v-for="item in ticket.items" :key="item.id" class="px-5 py-3">
  <div class="flex justify-between gap-4">
  <div class="min-w-0">
  <p class="truncate text-sm font-semibold">{{ item.name }}</p>
@@ -821,29 +833,33 @@ async function holdCurrentTicket() {
  </div>
  </li>
  </ul>
- <div class="border-t border-[#d8e7f1] bg-[#f7fafc] p-4 dark:border-slate-600 dark:bg-slate-700">
+ </div>
+ </div>
+ </template>
+ <template #footer>
+ <div v-if="ticket" class="w-full">
+ <div class="border-b border-[#d8e7f1] bg-[#f7fafc] p-4 dark:border-slate-600 dark:bg-slate-700">
  <div class="flex items-center justify-between">
  <p class="text-sm text-[#64748b] dark:text-slate-300">Artículos</p>
  <p class="font-semibold">{{ ticket.itemCount }}</p>
  </div>
- <div class="mt-3 flex items-end justify-between">
- <p class="text-lg font-bold">{{ shouldRoundPaymentMethod(ticket.paymentMethod) ? 'Subtotal' : 'Total' }}</p>
- <p class="text-3xl font-bold tracking-[-.04em] text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(ticket.total) }}</p>
+ <div class="mt-2 flex items-end justify-between">
+ <p class="text-base font-bold">{{ shouldRoundPaymentMethod(ticket.paymentMethod) ? 'Subtotal' : 'Total' }}</p>
+ <p class="text-2xl font-bold tracking-[-.04em] text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(ticket.total) }}</p>
  </div>
- <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod) && ticket.paymentTotal !== ticket.total" class="mt-3 flex items-center justify-between">
+ <div v-if="shouldRoundPaymentMethod(ticket.paymentMethod) && ticket.paymentTotal !== ticket.total" class="mt-2 flex items-center justify-between">
  <p class="text-sm text-[#64748b] dark:text-slate-300">Total cobrado</p>
- <p class="text-xl font-bold text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(ticket.paymentTotal) }}</p>
+ <p class="text-lg font-bold text-[#456a88] dark:text-[#c8d6df]">{{ currency.format(ticket.paymentTotal) }}</p>
  </div>
  </div>
- </div>
-
- <div class="grid gap-2 sm:grid-cols-2">
+ <div class="grid gap-2 p-4 sm:grid-cols-3">
+ <UButton block label="Imprimir ticket" icon="i-lucide-printer" color="neutral" variant="soft" @click="printTicket" />
  <UButton block label="Nueva venta" icon="i-lucide-plus" @click="ticketOpen = false" />
  <UButton block label="Ver historial" icon="i-lucide-receipt-text" variant="soft" to="/dashboard/salesHistory" />
  </div>
  </div>
  </template>
- </USlideover>
+ </UModal>
  </div>
  </DashboardShell>
 </template>

@@ -96,13 +96,15 @@ async function exportProducts(scope: 'all' | 'low-stock' | 'selected') {
  const url = URL.createObjectURL(blob)
  const anchor = document.createElement('a')
  anchor.href = url
- anchor.download = `productos-${scope}-${new Date().toISOString().slice(0, 10)}.csv`
+ const textExport = scope === 'low-stock' || scope === 'selected'
+ const fileScope = scope === 'low-stock' ? 'bajo-stock' : scope === 'selected' ? 'seleccionados' : 'all'
+ anchor.download = `productos-${fileScope}-${new Date().toISOString().slice(0, 10)}.${textExport ? 'txt' : 'csv'}`
  document.body.append(anchor)
  anchor.click()
  anchor.remove()
  URL.revokeObjectURL(url)
 
- toast.add({ title: 'Exportación lista', description: 'Se descargó el archivo CSV de productos.', color: 'success', icon: 'i-lucide-download' })
+ toast.add({ title: 'Exportación lista', description: `Se descargó el archivo ${textExport ? 'TXT' : 'CSV'} de productos.`, color: 'success', icon: 'i-lucide-download' })
  } catch (error: unknown) {
  toast.add({ title: 'No se pudo exportar', description: getErrorMessage(error, 'Intenta nuevamente.'), color: 'error', icon: 'i-lucide-circle-alert' })
  } finally {

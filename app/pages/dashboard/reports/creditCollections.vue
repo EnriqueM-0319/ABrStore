@@ -280,11 +280,10 @@ function collectionBarHeight(total: number) {
 
 <template>
  <DashboardShell eyebrow="Administración" title="Reporte de cobros de fiado">
- <div class="mx-auto max-w-[1500px] p-4 sm:p-6 lg:p-8">
- <div class="mb-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+ <div class="mx-auto max-w-[1320px] p-4 sm:p-5 lg:p-6">
+ <div class="mb-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
  <div>
- <h2 class="text-xl font-bold">Cobros de cuentas fiadas</h2>
- <p class="mt-1 text-sm text-[#64748b]">Analiza cuándo entró realmente el dinero de cuentas por cobrar, separado por forma de pago.</p>
+ <h2 class="text-lg font-bold">Cobros de cuentas fiadas</h2>
  </div>
  <div class="flex flex-wrap gap-2">
  <UButton to="/dashboard/reports/sales" label="Ver ventas originadas" icon="i-lucide-chart-column" color="neutral" variant="soft" />
@@ -293,7 +292,7 @@ function collectionBarHeight(total: number) {
  </div>
  </div>
 
- <UCard class="mb-5" :ui="{ root: 'rounded-2xl ring-[#dde3de]', body: 'p-4' }">
+ <UCard class="mb-4" :ui="{ root: 'rounded-lg ring-[#dde3de]', body: 'p-3' }">
  <div class="grid gap-3 lg:grid-cols-[1fr_1fr_1fr] lg:items-end">
  <UFormField label="Agrupar ventas" name="sales-report-group">
  <USelect v-model="groupBy" :items="groupOptions" value-key="value" label-key="label" class="w-full" />
@@ -307,7 +306,7 @@ function collectionBarHeight(total: number) {
  </div>
  </UCard>
 
- <UAlert v-if="error" class="mb-5" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar el reporte">
+ <UAlert v-if="error" class="mb-4" color="error" variant="soft" icon="i-lucide-circle-alert" title="No pudimos cargar el reporte">
  <template #actions>
  <UButton label="Reintentar" color="error" variant="soft" @click="refresh()" />
  </template>
@@ -315,7 +314,7 @@ function collectionBarHeight(total: number) {
 
  <UAlert
  v-if="isRefreshing"
- class="mb-5"
+ class="mb-4"
  color="neutral"
  variant="soft"
  icon="i-lucide-refresh-cw"
@@ -323,19 +322,19 @@ function collectionBarHeight(total: number) {
  description="Mostramos los datos actuales mientras consultamos cambios."
  />
 
- <div v-if="isLoading" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
- <USkeleton v-for="item in 4" :key="item" class="h-32 rounded-2xl" />
+ <div v-if="isLoading" class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+ <USkeleton v-for="item in 4" :key="item" class="h-24 rounded-lg" />
  </div>
 
  <template v-else>
- <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+ <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
  <UAlert color="success" variant="soft" icon="i-lucide-banknote" title="Cobro fiado efectivo" :description="currency.format(data.summary.creditCollectedCashTotal)" />
  <UAlert color="neutral" variant="soft" icon="i-lucide-credit-card" title="Cobro fiado tarjeta" :description="currency.format(data.summary.creditCollectedCardTotal)" />
  <UAlert color="neutral" variant="soft" icon="i-lucide-send" title="Cobro fiado transferencia" :description="currency.format(data.summary.creditCollectedTransferTotal)" />
  <UAlert color="primary" variant="soft" icon="i-lucide-circle-dollar-sign" title="Fiado cobrado total" :description="currency.format(data.summary.creditCollectedTotal)" />
  </div>
 
- <UCard class="mt-5" :ui="{ root: 'rounded-2xl ring-[#dde3de]', header: 'p-5', body: 'p-5' }">
+ <UCard class="mt-4" :ui="{ root: 'rounded-lg ring-[#dde3de]', header: 'p-4', body: 'p-4' }">
  <template #header>
  <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
  <div>
@@ -346,18 +345,13 @@ function collectionBarHeight(total: number) {
  </div>
  </template>
 
- <div v-if="!data.summary.creditCollectedTotal" class="p-10 text-center">
- <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-9 text-[#94a3b8]" aria-hidden="true" />
- <h4 class="mt-3 font-bold">No hay cobros de fiado en este rango</h4>
- <p class="mt-1 text-sm text-[#64748b]">Cambia las fechas o vuelve cuando existan cuentas liquidadas.</p>
+ <div v-if="!data.summary.creditCollectedTotal" class="p-8 text-center">
+ <UIcon name="i-lucide-chart-no-axes-combined" class="mx-auto size-7 text-[#94a3b8]" aria-hidden="true" />
+ <h4 class="mt-2 font-bold">No hay cobros de fiado en este rango</h4>
  </div>
 
  <div v-else class="overflow-x-auto">
  <div class="min-w-[42rem]">
- <div class="mb-3">
- <h4 class="font-semibold text-[#0f172a]">Cobros de fiado</h4>
- <p class="text-xs text-[#64748b]">Muestra cuándo entró realmente el dinero de cuentas fiadas, separado por forma de cobro.</p>
- </div>
  <div class="mb-3 flex items-center justify-between text-xs text-[#64748b]">
  <div class="flex flex-wrap items-center gap-3">
  <span
@@ -370,21 +364,20 @@ function collectionBarHeight(total: number) {
  {{ series.label }}
  </span>
  </div>
- <span>Máximo: {{ currency.format(maxCollectionTotal) }}</span>
  </div>
- <div class="flex h-72 items-end gap-3 border-b border-l border-[#c7dbe8] px-3 pt-4" aria-label="Gráfica de barras de cobros de fiado por periodo y forma de pago">
+ <div class="flex h-56 items-end gap-3 border-b border-l border-[#c7dbe8] px-3 pt-3" aria-label="Gráfica de barras de cobros de fiado por periodo y forma de pago">
  <div
  v-for="item in chartItems"
  :key="item.period"
  class="flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-2"
  :title="`${formatPeriod(item.period)} · Cobro efectivo ${currency.format(item.creditCollectedCashTotal)} · Cobro tarjeta ${currency.format(item.creditCollectedCardTotal)} · Cobro transferencia ${currency.format(item.creditCollectedTransferTotal)}`"
  >
- <span class="max-w-24 truncate text-xs font-semibold text-[#456a88]">{{ item.creditCollectedTotal ? currency.format(item.creditCollectedTotal) : '' }}</span>
- <div class="flex h-56 w-full items-end justify-center gap-1.5">
+ <span class="max-w-20 truncate text-[11px] font-semibold text-[#456a88]">{{ item.creditCollectedTotal ? currency.format(item.creditCollectedTotal) : '' }}</span>
+ <div class="flex h-40 w-full items-end justify-center gap-1.5">
  <div
  v-for="series in collectionChartSeries"
  :key="series.key"
- class="w-full max-w-4 rounded-t-lg transition-all"
+ class="w-full max-w-3 rounded-t transition-all"
  :class="item[series.key] ? `${series.color} shadow-sm` : 'bg-[#e7ece8]'"
  :style="{ height: collectionBarHeight(item[series.key]) }"
  role="img"
@@ -393,9 +386,6 @@ function collectionBarHeight(total: number) {
  </div>
  <span class="w-full truncate text-center text-xs font-medium capitalize text-[#475569]">{{ formatXAxisLabel(item.period) }}</span>
  </div>
- </div>
- <div class="mt-2 text-center text-xs font-semibold uppercase tracking-[.14em] text-[#94a3b8]">
- {{ groupBy === 'day' ? 'Días de la semana' : groupBy === 'month' ? 'Meses' : 'Años' }}
  </div>
  </div>
  </div>

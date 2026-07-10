@@ -5,6 +5,10 @@ const form = reactive({ type: 'SUPPLIER_PAYMENT' as CashMovementType, amount: ''
 const saving = ref(false)
 const formError = ref('')
 const lastMovement = ref<CashMovement | null>(null)
+const movementToEdit = ref<CashMovement | null>(null)
+const editAmount = ref('')
+const editing = ref(false)
+const editError = ref('')
 const page = ref(1)
 const limit = ref(10)
 const toast = useToast()
@@ -50,8 +54,46 @@ function movementColor(type: CashMovementType) {
  return type === 'CASH_IN' ? 'success' : type === 'ADJUSTMENT' ? 'warning' : 'error'
 }
 
+function canEditMovement(movement: CashMovement) {
+ return !movement.description.startsWith('Pago de cuenta por cobrar')
+}
+
 function goToPage(nextPage: number) {
  page.value = Math.min(Math.max(nextPage, 1), pageCount.value)
+}
+
+function openEditMovement(movement: CashMovement) {
+ movementToEdit.value = movement
+ editAmount.value = String(movement.amount)
+ editError.value = ''
+}
+
+function closeEditMovement() {
+ if (editing.value) return
+ movementToEdit.value = null
+ editAmount.value = ''
+ editError.value = ''
+}
+
+async function updateMovementAmount() {
+ if (!movementToEdit.value) return
+ editing.value = true
+ editError.value = ''
+ try {
+ const movement = await $fetch<CashMovement>(`/api/cashMovements/${movementToEdit.value.id}`, {
+ method: 'PATCH',
+ body: { amount: Number(editAmount.value) }
+ })
+ toast.add({ title: 'Movimiento actualizado', description: `Nuevo monto: ${currency.format(movement.amount)}.`, color: 'success', icon: 'i-lucide-pencil' })
+ movementToEdit.value = null
+ editAmount.value = ''
+ await Promise.all([refresh(), refreshCash({ force: true })])
+ } catch (error: unknown) {
+ editError.value = getErrorMessage(error, 'No pudimos actualizar el movimiento.')
+ toast.add({ title: 'No se pudo actualizar', description: editError.value, color: 'error', icon: 'i-lucide-circle-alert' })
+ } finally {
+ editing.value = false
+ }
 }
 
 async function saveMovement() {
@@ -140,7 +182,10 @@ async function saveMovement() {
  </div>
  <p class="mt-1 text-xs text-[#64748b]">{{ movement.createdBy.fullName }} · {{ dateTime.format(new Date(movement.createdAt)) }}</p>
  </div>
+ <div class="flex shrink-0 items-center justify-between gap-2 sm:justify-end">
  <p class="whitespace-nowrap text-lg font-bold" :class="movement.type === 'CASH_IN' ? 'text-sky-700' : 'text-red-700'">{{ currency.format(movement.amount) }}</p>
+ <UButton v-if="canEditMovement(movement)" icon="i-lucide-pencil" color="neutral" variant="ghost" size="sm" aria-label="Editar monto" @click="openEditMovement(movement)" />
+ </div>
  </div>
  </li>
  </ul>
@@ -158,5 +203,26 @@ async function saveMovement() {
  </div>
  </section>
  </div>
+
+ <UModal :open="Boolean(movementToEdit)" title="Editar monto" description="Corrige el importe registrado en la caja actual." @update:open="value => !value && closeEditMovement()">
+ <template #body>
+ <div class="space-y-4">
+ <div v-if="movementToEdit" class="rounded-lg border border-[#d8e7f1] bg-[#f7fafc] p-3">
+ <p class="text-sm font-semibold">{{ movementToEdit.description }}</p>
+ <p class="mt-1 text-xs text-[#64748b]">{{ movementLabel(movementToEdit.type) }} · {{ dateTime.format(new Date(movementToEdit.createdAt)) }}</p>
+ </div>
+ <UFormField label="Nuevo monto" name="editAmount" required>
+ <UInput v-model="editAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" class="w-full" />
+ </UFormField>
+ <ActionFeedback v-if="editError" :message="editError" type="error" @dismiss="editError = ''" />
+ </div>
+ </template>
+ <template #footer>
+ <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
+ <UButton label="Cancelar" color="neutral" variant="soft" :disabled="editing" @click="closeEditMovement" />
+ <UButton label="Guardar monto" icon="i-lucide-save" :loading="editing" @click="updateMovementAmount" />
+ </div>
+ </template>
+ </UModal>
  </div>
 </template>

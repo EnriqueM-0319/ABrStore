@@ -9,6 +9,7 @@ const cashRegisterSummaryQuery = `#graphql
 `
 
 export default defineEventHandler(async (event) => {
+ setHeader(event, 'Cache-Control', 'no-store, max-age=0')
  const data = await graphqlRequest<{ cashRegisterSummary: unknown | null }>(event, cashRegisterSummaryQuery)
  return data.cashRegisterSummary
 })

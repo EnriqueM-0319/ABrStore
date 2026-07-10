@@ -6,11 +6,16 @@ withDefaults(defineProps<{ eyebrow?: string; title?: string; hideHeader?: boolea
 })
 const mobileMenuOpen = ref(false)
 const { user } = useAuth()
+const { status: backendWarmupStatus, errorMessage: backendWarmupError, warmup: warmupBackend } = useBackendWarmup()
 const initials = computed(() => user.value?.displayName.split(' ').filter(Boolean).map(part => part[0]).slice(0, 2).join('').toUpperCase() || 'U')
 const roleLabel = computed(() => {
  if (user.value?.role === 'SUPERADMIN') return 'Superadmin'
  if (user.value?.role === 'ADMIN') return 'Administrador'
  return 'Colaborador'
+})
+
+onMounted(() => {
+ void warmupBackend()
 })
 </script>
 
@@ -40,7 +45,33 @@ const roleLabel = computed(() => {
  <div v-else class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95 lg:hidden">
  <UButton icon="i-lucide-menu" color="neutral" variant="ghost" aria-label="Abrir menú principal" @click="mobileMenuOpen = true" />
  </div>
- <main id="main-content" tabindex="-1"><slot /></main>
+ <main id="main-content" tabindex="-1">
+ <div v-if="backendWarmupStatus === 'slow' || backendWarmupStatus === 'error'" class="px-4 pt-4 sm:px-6 lg:px-8">
+ <UAlert
+ v-if="backendWarmupStatus === 'slow'"
+ class="mx-auto max-w-[1500px]"
+ color="info"
+ variant="soft"
+ icon="i-lucide-loader-circle"
+ title="Conectando con el servidor"
+ description="El servidor puede estar despertando. Esto puede tardar unos segundos."
+ />
+ <UAlert
+ v-else
+ class="mx-auto max-w-[1500px]"
+ color="warning"
+ variant="soft"
+ icon="i-lucide-wifi-off"
+ title="No pudimos conectar con el servidor"
+ :description="backendWarmupError"
+ >
+ <template #actions>
+ <UButton label="Reintentar" color="warning" variant="soft" @click="warmupBackend(true)" />
+ </template>
+ </UAlert>
+ </div>
+ <slot />
+ </main>
  </div>
  </div>
 </template>
