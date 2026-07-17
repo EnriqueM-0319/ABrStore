@@ -6,7 +6,7 @@ export default defineNuxtConfig({
     head: {
       title: 'ABR Store',
       meta: [
-        { name: 'theme-color', content: '#4f7896' },
+        { name: 'theme-color', content: '#1f4937' },
         { name: 'apple-mobile-web-app-capable', content: 'yes' },
         { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
         { name: 'apple-mobile-web-app-title', content: 'Abarrotes Alex' },
@@ -15,7 +15,8 @@ export default defineNuxtConfig({
       link: [
         { rel: 'manifest', href: '/manifest.webmanifest' },
         { rel: 'icon', type: 'image/svg+xml', href: '/icons/icon.svg' },
-        { rel: 'apple-touch-icon', href: '/icons/icon.svg' }
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/icons/favicon-32.png' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/apple-touch-icon.png' }
       ]
     }
   },
